@@ -1,7 +1,5 @@
-import React from 'react';
-import QuickService from './quickService';
+import React from 'react'; 
 import NoticeSection from './noticeSection';
-import Chatbot from './chatbot';
 import main2Img from '../../assets/main2.png';
 import main3Img from '../../assets/main3.png';
 
@@ -39,7 +37,7 @@ const ServiceSection = () => {
         {/* 오른쪽 자주 찾는 서비스 및 공지사항 */}
         <div style={styles.right}>
           <NoticeSection />
-          <Chatbot />
+          
         </div>
       </div>
     </div>

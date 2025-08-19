@@ -7,7 +7,7 @@ const HEADER_H = 120;
 const TOP_SAFE = 16;
 
 export default function Esidebar({
-  activePage = "dashboard",     // "dashboard" | "reports"
+  activePage = "dashboard", // "dashboard" | "reports"
   setActivePage = () => {},
   profile = {
     orgName: "동국대학교",
@@ -20,14 +20,16 @@ export default function Esidebar({
       {/* 검색 */}
       <div style={sx.searchBox}>
         <Search size={16} style={sx.searchIcon} />
-        <input placeholder="검색" style={sx.searchInput} />
+        <input type="search" placeholder="검색" style={sx.searchInput} />
       </div>
 
       {/* Profile */}
       <div style={sx.section}>
         <div style={sx.sectionTitle}>Profile</div>
         <div style={sx.profileCard}>
-          <span role="img" aria-label="building" style={sx.profileEmoji}>🏫</span>
+          <span role="img" aria-label="building" style={sx.profileEmoji}>
+            🏫
+          </span>
           <span>{profile.orgName}</span>
         </div>
         <div style={sx.profileSub}>- {profile.orgGroup}</div>
@@ -50,7 +52,9 @@ export default function Esidebar({
           }}
         >
           {activePage === "dashboard" && <span style={sx.activeBar} />}
-          <span style={sx.menuIcon}><LayoutDashboard size={16} /></span>
+          <span style={sx.menuIcon}>
+            <LayoutDashboard size={16} />
+          </span>
           <span>탄소 감축 대시보드</span>
         </button>
 
@@ -64,7 +68,9 @@ export default function Esidebar({
           }}
         >
           {activePage === "reports" && <span style={sx.activeBar} />}
-          <span style={sx.menuIcon}><Download size={16} /></span>
+          <span style={sx.menuIcon}>
+            <Download size={16} />
+          </span>
           <span>전체 리포트 다운로드</span>
         </button>
       </div>
@@ -85,17 +91,32 @@ const sx = {
     background: "#F4F7F6",
     borderRight: "1px solid #E5E9E7",
     overflowY: "auto",
+    overflowX: "hidden", // ✅ 가로 넘침 숨김
     boxSizing: "border-box",
   },
 
   // 검색
-  searchBox: { position: "relative", marginBottom: 16 },
+  searchBox: { position: "relative", marginBottom: 16, width: "100%" },
   searchIcon: {
-    position: "absolute", left: 5, top: "50%", transform: "translateY(-50%)", color: "#9AA39F",
+    position: "absolute",
+    left: 8,
+    top: "50%",
+    transform: "translateY(-50%)",
+    color: "#9AA39F",
+    pointerEvents: "none",
   },
   searchInput: {
-    width: "100%", height: 40, padding: "0 12px 0 36px",
-    borderRadius: 12, border: "1px solid #D8E1DD", outline: "none", background: "#fff",
+    width: "100%",
+    height: 40,
+    padding: "0 12px 0 36px",
+    boxSizing: "border-box", // ✅ padding 포함하여 100% 계산
+    display: "block",
+    maxWidth: "100%", // ✅ 부모 너비 초과 방지
+    borderRadius: 12,
+    border: "1px solid #D8E1DD",
+    outline: "none",
+    background: "#fff",
+    WebkitAppearance: "none", // ✅ Safari 기본 스타일 제거
   },
 
   // 섹션
@@ -105,8 +126,14 @@ const sx = {
 
   // 프로필
   profileCard: {
-    display: "flex", alignItems: "center", gap: 8,
-    background: "#fff", border: "1px solid #E5E9E7", borderRadius: 10, padding: "10px 12px", fontSize: 14,
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    background: "#fff",
+    border: "1px solid #E5E9E7",
+    borderRadius: 10,
+    padding: "10px 12px",
+    fontSize: 14,
   },
   profileEmoji: { width: 18, display: "flex", alignItems: "center", justifyContent: "center" },
   profileSub: { paddingLeft: 8, color: "#6B7280", fontSize: 13 },
@@ -114,11 +141,18 @@ const sx = {
   // 메뉴
   menuItem: {
     position: "relative",
-    display: "flex", alignItems: "center", gap: 10,
-    height: 44, padding: "0 12px",
-    borderRadius: 10, textAlign: "left",
-    background: "transparent", border: "1px solid transparent",
-    color: "#2A2F2C", fontSize: 14, lineHeight: LINE_HEIGHT,
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    height: 44,
+    padding: "0 12px",
+    borderRadius: 10,
+    textAlign: "left",
+    background: "transparent",
+    border: "1px solid transparent",
+    color: "#2A2F2C",
+    fontSize: 14,
+    lineHeight: LINE_HEIGHT,
     cursor: "pointer",
   },
   menuItemActive: {
@@ -128,10 +162,19 @@ const sx = {
     fontWeight: 700,
   },
   activeBar: {
-    position: "absolute", left: 0, top: 0, bottom: 0,
-    width: 4, borderRadius: "10px 0 0 10px", background: "#1F7A43",
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    borderRadius: "10px 0 0 10px",
+    background: "#1F7A43",
   },
   menuIcon: {
-    width: 18, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center",
+    width: 18,
+    textAlign: "center",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
 };

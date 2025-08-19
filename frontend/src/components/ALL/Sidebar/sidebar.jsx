@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Building2, ClipboardList, Flame } from "lucide-react"; // 아이콘 불러오기
+import { Search, LayoutDashboard, Download } from "lucide-react";
 
 const HEADER_H = 64;
 const TOP_SAFE = 16;
@@ -12,6 +13,12 @@ export default function Sidebar({ activePage, setActivePage }) {
   return (
     <aside style={sx.sidebar}>
       <div style={{ height: TOP_SAFE }} />
+
+      {/* 검색 */}
+      <div style={sx.searchBox}>
+        <Search size={16} style={sx.searchIcon} />
+        <input type="search" placeholder="검색" style={sx.searchInput} />
+      </div>
 
       <h4 style={sx.title}>Menu</h4>
 
@@ -70,6 +77,29 @@ export default function Sidebar({ activePage, setActivePage }) {
 }
 
 const sx = {
+  // 검색
+  searchBox: { position: "relative", marginBottom: 16, width: "100%" },
+  searchIcon: {
+    position: "absolute",
+    left: 8,
+    top: "50%",
+    transform: "translateY(-50%)",
+    color: "#9AA39F",
+    pointerEvents: "none",
+  },
+  searchInput: {
+    width: "100%",
+    height: 40,
+    padding: "0 12px 0 36px",
+    boxSizing: "border-box", // ✅ padding 포함하여 100% 계산
+    display: "block",
+    maxWidth: "100%", // ✅ 부모 너비 초과 방지
+    borderRadius: 12,
+    border: "1px solid #D8E1DD",
+    outline: "none",
+    background: "#fff",
+    WebkitAppearance: "none", // ✅ Safari 기본 스타일 제거
+  },
   sidebar: {
     width: 260,
     backgroundColor: "#F4F7F6",
