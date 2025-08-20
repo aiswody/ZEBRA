@@ -10,22 +10,6 @@ class Building(models.Model):
     gross_area_m2 = models.FloatField(default=0)        # 연면적
     conditioned_area_m2 = models.FloatField(default=0)  # 냉난방 면적(선택)
 
-# 연료/전력 사용량(월단위 입력)
-class EnergyUsage(models.Model):
-    building = models.ForeignKey(Building, on_delete=models.CASCADE)
-    year  = models.IntegerField()
-    month = models.IntegerField()  # 1~12
-    # 단위 주석 필수!
-    electricity_kwh = models.FloatField(default=0)   # 전력
-    city_gas_nm3    = models.FloatField(default=0)   # 도시가스(부피)
-    lpg_kg          = models.FloatField(default=0)
-    diesel_l        = models.FloatField(default=0)
-    kerosene_l      = models.FloatField(default=0)
-    etc_fuel_l      = models.FloatField(default=0)   # 필요시 확장
-
-    class Meta:
-        unique_together = ('building','year','month')
-
 # 정부/기관 공표 배출계수 테이블(버전관리 가능)
 class EmissionFactor(models.Model):
     FUEL_CHOICES = [
