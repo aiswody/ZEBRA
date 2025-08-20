@@ -12,5 +12,6 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),   # ← 인증 라우팅
+    path('api/', include('buildings.urls')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-ui'),
 ]

@@ -24,7 +24,7 @@ export default function Graph3({ scope1 = 0, scope2 = 0, title = "SCOPE 비율" 
     { name: "SCOPE1", value: s1 },
     { name: "SCOPE2", value: s2 },
   ];
-  const COLORS = ["#a7f3d0", "#16a34a"];
+  const COLORS = ["#22c55ec5", "#15803cda"]
 
   return (
     <div style={card}>

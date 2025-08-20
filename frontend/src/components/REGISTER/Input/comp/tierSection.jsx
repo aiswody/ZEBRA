@@ -122,7 +122,10 @@ const TierSection = ({
                 ))}
               </select>
             </div>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', color: '#6b7280', whiteSpace: 'nowrap' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', color: '#6b7280', whiteSpace: 'nowrap', 
+              fontSize: 13,    }}>
+
+
               {unitLabel.replace(' (단위)', '')}
             </div>
             <div style={{ flex: 2 }}>

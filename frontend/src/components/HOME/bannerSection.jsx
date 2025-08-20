@@ -162,7 +162,8 @@ const styles = {
     transform: 'scaleX(-1)',
   },
   searchBox: {
-    padding: '12px',
+    padding: '12px 24px',     // 좌우 여백 +12px
+    paddingRight: '140px',     // 오른쪽 끝에 여백 더 확보 (텍스트 뒤 여유)
     borderRadius: '30px',
     border: '1px solid #ccc',
     width: '50%',
@@ -178,7 +179,6 @@ const styles = {
     boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
     textAlign: 'center',
     position: 'relative',
-    // minHeight: 360, // 선택: 전후 높이감 맞추고 싶으면 유지
   },
 
   // 로그인 후: 바깥은 투명 레이아웃만(이중 카드 방지)
@@ -210,24 +210,24 @@ const styles = {
   },
 
   input: {
-  width: '90%',
-  padding: '10px',
-  margin: '0 auto 10px',  // 가로 중앙 정렬
-  borderRadius: '6px',
-  border: '1px solid #ddd',
-},
+    width: '90%',
+    padding: '10px',
+    margin: '0 auto 10px',
+    borderRadius: '6px',
+    border: '1px solid #ddd',
+  },
 
   loginButton: {
-  width: '98%',              // input이랑 동일
-  padding: '10px',
-  backgroundColor: '#0F4D2A',
-  color: 'white',
-  border: 'none',
-  borderRadius: '6px',
-  cursor: 'pointer',
-  margin: '0 auto 12px',     // 가운데 정렬
-  display: 'block',          // 버튼도 block 처리해서 margin auto 적용
-},
+    width: '98%',
+    padding: '10px',
+    backgroundColor: '#0F4D2A',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    margin: '0 auto 12px',
+    display: 'block',
+  },
   loginOptions: {
     display: 'flex',
     alignItems: 'center',

@@ -1,11 +1,26 @@
 // 건물 등록 UI + 우측 건물 목록 + 카카오 키워드 검색 + 하단 지도
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../../contexts/authContext';
+import { api } from '../../../api/client'
 
 /** ─────────── 설정 ─────────── */
-const BUILDINGS_API = '/api/buildings';            // 백엔드 엔드포인트
-const KAKAO_KEY = '6bfadcc55e6a410027178ce3208a469e'; // Kakao JavaScript 키
+const API_BASE = process.env.REACT_APP_API_BASE ?? '/api';
+const BUILDINGS_API = `${(API_BASE || '').replace(/\/$/, '')}/buildings/`;
+const KAKAO_KEY = '6bfadcc55e6a410027178ce3208a469e';
 const MOCK_KEY = 'mockBuildings';                  // 서버 미동작 시 로컬 저장 키
+
+/** JWT 헤더 헬퍼 */
+function getAuthHeaders(extra = {}) {
+  try {
+    // useAuth()에 토큰이 있으면 우선 사용하고, 없으면 localStorage에서 가져오기
+    const token = localStorage.getItem('accessToken') || localStorage.getItem('access');
+    return token
+      ? { Authorization: `Bearer ${token}`, Accept: 'application/json', ...extra }
+      : { Accept: 'application/json', ...extra };
+  } catch {
+    return { Accept: 'application/json', ...extra };
+  }
+}
 
 /** Kakao SDK 로더 */
 function loadKakaoSDK(appKey) {
@@ -33,43 +48,54 @@ function loadKakaoSDK(appKey) {
 }
 
 /** 서버/로컬 공통 유틸 */
-async function safeGetList() {
-  try {
-    const res = await fetch(BUILDINGS_API, { headers: { Accept: 'application/json' } });
-    if (!res.ok) throw new Error('server not ready');
-    const data = await res.json();
-    return Array.isArray(data) ? data : [];
-  } catch {
-    const raw = localStorage.getItem(MOCK_KEY);
-    return raw ? JSON.parse(raw) : [];
-  }
-}
-async function safeAdd(name) {
-  try {
-    const res = await fetch(BUILDINGS_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    });
-    if (!res.ok) throw new Error('server not ready');
-    return await res.json(); // {id, name} 가정
-  } catch {
-    const item = { id: Date.now(), name };
-    const list = await safeGetList();
-    const next = [...list, item];
-    localStorage.setItem(MOCK_KEY, JSON.stringify(next));
-    return item;
-  }
-}
-async function safeDelete(id) {
-  try {
-    const res = await fetch(`${BUILDINGS_API}/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('server not ready');
-  } catch {
-    const list = await safeGetList();
-    localStorage.setItem(MOCK_KEY, JSON.stringify(list.filter(b => String(b.id) !== String(id))));
-  }
-}
+ async function safeGetList() {
+     try {
+       // client.js의 baseURL이 '/api' 라면 여기엔 '/buildings/' 만 써도 됩니다.
+       const { data } = await api.get('/buildings/');
+       if (Array.isArray(data)) return data;
+       if (data && Array.isArray(data.results)) return data.results;
+       return [];
+     } catch (e) {
+       const raw = localStorage.getItem(MOCK_KEY);
+       return raw ? JSON.parse(raw) : [];
+     }
+   }
+    async function safeAdd(payload) {
+       try {
+         const { data } = await api.post('/buildings/', payload);
+         return data;
+       } catch (e) {
+         const item = {
+           id: Date.now(),
+           name: payload.name,
+           usage: payload.use_type || 'OTHER',
+           usageLabel: payload.use_type || '기타',
+           address: payload.address || '',
+         };
+         const list = await safeGetList();
+         const next = [...list, item];
+         localStorage.setItem(MOCK_KEY, JSON.stringify(next));
+         return item;
+       }
+     }
+      async function safeDelete(id) {
+         try {
+           await api.delete(`/buildings/${id}/`);
+         } catch (e) {
+           const list = await safeGetList();
+           localStorage.setItem(MOCK_KEY, JSON.stringify(list.filter(b => String(b.id) !== String(id))));
+         }
+       }
+
+/** 한글 라벨 → 백엔드 enum 코드 매핑 */
+const usageMap = {
+  '업무 시설': 'OFFICE',
+  '교육 연구 시설': 'EDU_RESEARCH',
+  '문화 및 집회시설': 'CULTURE_ASSEMBLY',
+  '의료 시설': 'MEDICAL',
+  '수련 시설': 'TRAINING',
+  '운수 시설': 'TRANSPORT',
+};
 
 const Building = () => {
   const { user } = useAuth();
@@ -82,6 +108,10 @@ const Building = () => {
   const [suggests, setSuggests] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [buildingName, setBuildingName] = useState(''); // 실제 추가될 이름
+
+  // 제안에서 고른 상세(주소, 좌표, 고유ID)
+  const [picked, setPicked] = useState(null);
+  // { id: place_id, title, address, x(lng), y(lat) }
 
   // 우측 목록
   const [list, setList] = useState([]);
@@ -154,7 +184,7 @@ const Building = () => {
           return;
         }
         const mapped = data.map(p => ({
-          id: p.id,
+          id: p.id,                        // place_id 로 사용
           title: p.place_name,
           address: p.road_address_name || p.address_name || '',
           x: p.x, // lng
@@ -166,11 +196,12 @@ const Building = () => {
     return () => clearTimeout(t);
   }, [keyword]);
 
-  // 제안 클릭 → 건물명 세팅 + 지도 이동
+  // 제안 클릭 → 건물명 세팅 + 지도 이동 + picked 저장
   const pickSuggest = (s) => {
     setBuildingName(s.title);
     setKeyword('');
     setSuggests([]);
+    setPicked(s);
     if (mapObjRef.current && markerRef.current && s.y && s.x) {
       const latlng = new window.kakao.maps.LatLng(Number(s.y), Number(s.x));
       mapObjRef.current.setCenter(latlng);
@@ -178,16 +209,44 @@ const Building = () => {
     }
   };
 
+  // 건물 용도 (옵션)
+  const buildingTypes = [
+    '업무 시설','교육 연구 시설','문화 및 집회시설','의료 시설','수련 시설','운수 시설',
+  ];
+  const [selectedPurpose, setSelectedPurpose] = useState('');
+
   // 추가하기 → POST(또는 로컬) → 우측 목록 갱신
   const handleAdd = async () => {
     const name = buildingName.trim();
     if (!name) return alert('건물명을 입력하세요.');
+
+    // 프론트 레벨 중복 방지
     if (list.some(b => b.name === name)) {
       return alert('이미 등록된 건물입니다.');
     }
-    const created = await safeAdd(name);
-    setList(prev => [...prev, created]);
-    setBuildingName('');
+
+    // 백엔드에 맞는 payload 구성
+    const payload = {
+      name,
+      // serializers.BuildingCreateSerializer: use_type → usage(source) 매핑
+      ...(selectedPurpose && { use_type: usageMap[selectedPurpose] || 'OTHER' }),
+      ...(picked?.address && { address: picked.address }),
+      ...(picked?.y && { lat: Number(picked.y) }),
+      ...(picked?.x && { lng: Number(picked.x) }),
+      ...(picked?.id && { place_id: String(picked.id) }),
+      provider: 'KAKAO',
+    };
+
+    try {
+      const created = await safeAdd(payload);
+      setList(prev => [...prev, created]);
+      setBuildingName('');
+      setPicked(null);
+      setSelectedPurpose('');
+    } catch (e) {
+      console.error(e);
+      alert('등록 중 오류가 발생했습니다.');
+    }
   };
 
   // 우측 목록에서 삭제
@@ -195,11 +254,6 @@ const Building = () => {
     await safeDelete(id);
     setList(prev => prev.filter(b => String(b.id) !== String(id)));
   };
-
-  const buildingTypes = [
-    '업무 시설','교육 연구 시설','문화 및 집회시설','의료 시설','수련 시설','운수 시설',
-  ];
-  const [selectedPurpose, setSelectedPurpose] = useState('');
 
   return (
     <div style={styles.pageGrid}>
@@ -209,13 +263,14 @@ const Building = () => {
 
         {/* 기관명 표시 */}
         <div style={styles.section}>
-          <label>등록 기관명 (소속):</label>
+          <label> 등록명 (소속) : </label>
           <input
             type="text"
             value={insName || ''}
             readOnly
-            style={{ ...styles.input, backgroundColor:'#f3f4f6', color:'#374151',
-              whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}
+            style={{ border: "none", outline: "none", background: "transparent",
+              color:'#374151', fontSize: 16, fontWeight: 600,
+              whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', }}
           />
         </div>
 
@@ -226,7 +281,7 @@ const Building = () => {
             type="text"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            placeholder="예: 한양대 신공학관, 동국대 원흥관…"
+            placeholder="예: 한양대학교 신공학관, 동국대학교 원흥관…"
             style={styles.input}
           />
           {isSearching && <div style={styles.hint}>검색 중…</div>}
@@ -252,31 +307,36 @@ const Building = () => {
             placeholder="예: 동국대학교 원흥관"
             style={styles.input}
           />
-          <button style={styles.registerButton} onClick={handleAdd}>추가하기</button>
         </div>
 
         {/* 건물 용도 (옵션) */}
         <div style={styles.section}>
-          <label>건물 용도:</label>
+          <label>건물 용도</label>
           <div style={styles.tags}>
             {buildingTypes.map((item) => (
               <button
                 key={item}
                 style={{ ...styles.tag, ...(selectedPurpose===item ? styles.selectedTag : {}) }}
                 onClick={() => setSelectedPurpose(item)}
+                type="button"
               >
                 {item}
               </button>
             ))}
           </div>
+          <button style={styles.registerButton} onClick={handleAdd} type="button">추가하기</button>
         </div>
       </div>
 
       {/* 우측: 저장된 건물 목록 (삭제 가능) */}
       <aside style={styles.rightPanel} aria-label="건물 목록">
         <div style={styles.panelHeader}>
-          <div style={{ fontWeight:'bold' }}>건물 목록</div>
-          <small style={{ color:'#6b7280' }}>{insName ? `기관: ${insName}` : '기관명을 확인하세요'}</small>
+          <div style={{ fontWeight: 'bold', fontSize: '22px', marginBottom: '10px' }}>
+            건물 목록
+          </div>
+          <small style={{ color: '#6b7280', display: 'block',  marginBottom: '20px'}}>
+            {insName ? `기관 : ${insName}` : '기관명을 확인하세요'}
+          </small>
         </div>
 
         <div style={styles.listBox} role="list">
@@ -291,6 +351,10 @@ const Building = () => {
             <div key={b.id} style={styles.item} role="listitem">
               <div style={styles.itemMain}>
                 <div style={styles.itemName}>{b.name}</div>
+                <div style={{ fontSize:12, color:'#6b7280' }}>
+                  {b.usageLabel ? `용도: ${b.usageLabel}` : null}
+                  {b.address ? ` · 주소: ${b.address}` : null}
+                </div>
               </div>
               <button
                 type="button"
@@ -337,11 +401,11 @@ const styles = {
 
   tags: { display:'flex', flexWrap:'wrap', gap:'8px', marginTop:'8px' },
   tag: { background:'#f0f4f3', border:'1px solid #ccc', padding:'8px 12px', borderRadius:'16px', cursor:'pointer' },
-  selectedTag: { background:'#14532d', color:'#fff', border:'1px solid #14532d', fontWeight:'bold' },
+  selectedTag: { background:'#14532d', opacity: "85%", color:'#fff', border:'1px solid #14532d', fontWeight:'bold' },
 
   registerButton: {
-    marginTop:8, background:'#00512D', color:'#fff', border:'none', padding:'10px 16px',
-    borderRadius:'6px', fontWeight:'bold', cursor:'pointer'
+    marginTop:40, background:'#00512D', opacity: "85%", color:'#fff', border:'none', padding:'10px 16px',
+    borderRadius:'4px', fontWeight:'bold', cursor:'pointer'
   },
 
   rightPanel: { background:'#fff', padding:'16px', borderRadius:'8px', boxShadow:'0 2px 8px rgba(0,0,0,.1)', position:'sticky', top:12 },

@@ -23,7 +23,7 @@ export default function Graph2({
 }) {
   const data = [
     { name: "해당 건물", value: buildingTotal, fill: "#16a34a" }, // 진한 초록
-    { name: "평균", value: usageAvgTotal, fill: "#a7f3d0" }, // 연한 초록
+    { name: "평균", value: usageAvgTotal, fill: "#16a34a54" }, // 연한 초록
   ];
 
   return (
@@ -45,7 +45,7 @@ export default function Graph2({
               tick={{ fill: "#374151", fontWeight: 700 }}
             />
             <Tooltip />
-            <Bar dataKey="value" barSize={35} radius={[8, 8, 8, 8]}>
+            <Bar dataKey="value" barSize={35} radius={[3, 3, 3, 3]}>
               {data.map((entry, idx) => (
                 <cell key={`cell-${idx}`} fill={entry.fill} />
               ))}

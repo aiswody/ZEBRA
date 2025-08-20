@@ -14,7 +14,7 @@ const Scope1Card = ({ initialValue }) => {
         {/* 고체 연료 */}
         <TierSection
           title="고체 연료"
-          unitLabel="ton (단위)"
+          unitLabel="단위"
           fuelOptions={['무연탄', '유연탄']}
           initialValue={initialValue?.solid}
           getFieldsForTier={(tier) => {
@@ -34,7 +34,7 @@ const Scope1Card = ({ initialValue }) => {
         {/* 액체 연료 */}
         <TierSection
           title="액체 연료"
-          unitLabel="L (단위)"
+          unitLabel="단위"
           fuelOptions={['원유', '등유']}
           initialValue={initialValue?.liquid}
           getFieldsForTier={(tier) => {
@@ -48,7 +48,7 @@ const Scope1Card = ({ initialValue }) => {
         {/* 기체 연료 */}
         <TierSection
           title="기체 연료"
-          unitLabel="m³ (단위)"
+          unitLabel="단위"
           fuelOptions={['천연가스', '도시가스']}
           initialValue={initialValue?.gas}
           getFieldsForTier={(tier) => {

@@ -12,6 +12,7 @@ export async function login({ username, password }) {
   // 토큰 localStorage에 저장
   localStorage.setItem("access", data.access);
   localStorage.setItem("refresh", data.refresh);
+  localStorage.setItem("accessToken", data.access); 
   return data;
 }
 
@@ -25,4 +26,5 @@ export async function fetchMe() {
 export function logout() {
   localStorage.removeItem("access");
   localStorage.removeItem("refresh");
+  localStorage.removeItem("accessToken");
 }

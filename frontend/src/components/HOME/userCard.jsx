@@ -144,16 +144,17 @@ const styles = {
     textAlign: 'left',
   },
 
+
   logoutBtn: {
-    marginTop: 60,              // ⬅ 더 이상 'auto' 아님 (공간을 과하게 밀지 않음)
+    marginTop: 60,
     width: '100%',
     padding: '12px 0',
     background: '#185c37',
     color: '#fff',
     border: 0,
-    borderRadius: 999,
+    borderRadius: 9,    // ✅ 기존 999 → 12 로 수정
     fontWeight: 700,
-    fontSize: 16,
+    fontSize: 13,
     cursor: 'pointer',
   },
 };

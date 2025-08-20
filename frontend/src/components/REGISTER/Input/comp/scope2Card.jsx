@@ -1,5 +1,4 @@
 // Scope2 입력 컴포넌트
-
 import React, { useEffect, useMemo, useState } from 'react';
 
 const numberOnly = (v) => {
@@ -11,10 +10,14 @@ const numberOnly = (v) => {
   return decPart.length > 4 ? `${intPart}.${decPart.slice(0, 4)}` : cleaned;
 };
 
-const Scope2Card = ({ initialValue }) => {
+const Scope2Card = ({
+  initialValue,
+  title = '전기',
+  unitLabel = '단위',
+  rowUnit = 'kWh',
+}) => {
   const [rows, setRows] = useState([{ id: 1, name: '', kwh: '' }]);
 
-  // 👉 initialValue가 바뀌면 서버값으로 hydrate
   useEffect(() => {
     if (!initialValue?.meters?.length) {
       setRows([{ id: 1, name: '', kwh: '' }]);
@@ -40,40 +43,46 @@ const Scope2Card = ({ initialValue }) => {
 
   return (
     <div style={styles.card}>
-      <div style={styles.header}>
+      {/* Scope 2 배지 */}
+      <div style={styles.headerRow}>
         <span style={styles.badge}>Scope 2</span>
       </div>
 
-      <div style={styles.table}>
-        <div style={styles.tableHead}>
-          <div style={{ flex: 3, whiteSpace: 'nowrap' }}>계량기/계정</div>
-          <div style={{ flex: 1, whiteSpace: 'nowrap' }}>kWh (단위)</div>
-          <div style={{ width: 40 }} />
-        </div>
+      {/* 전기 / 단위 */}
+      <div style={styles.subHeader}>
+        <strong style={styles.headerTitle}>{title}</strong>
+        <span style={styles.headerUnit}>{unitLabel}</span>
+      </div>
 
+      {/* 입력부 */}
+      <div style={styles.table}>
         {rows.map((row) => (
           <div key={row.id} style={styles.tableRow}>
-            <div style={{ flex: 3 }}>
-              <input
-                type="text"
-                placeholder="예: 본관 A계량기"
-                value={row.name}
-                onChange={(e) => updateRow(row.id, { name: e.target.value })}
-                style={styles.input}
-              />
+            <div style={styles.inputCol}>
+              {/* 위 라벨 */}
+              <label style={styles.label}>사용량</label>
+              {/* input + 단위 */}
+              <div style={styles.inputRow}>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0.0"
+                  value={row.kwh}
+                  onChange={(e) => updateRow(row.id, { kwh: numberOnly(e.target.value) })}
+                  style={styles.input}
+                />
+                <span style={styles.textUnit}>{rowUnit}</span>
+              </div>
             </div>
-            <div style={{ flex: 1 }}>
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder="0.0"
-                value={row.kwh}
-                onChange={(e) => updateRow(row.id, { kwh: numberOnly(e.target.value) })}
-                style={styles.input}
-              />
-            </div>
+
+            {/* 삭제 버튼 */}
             <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
-              <button type="button" onClick={() => removeRow(row.id)} style={styles.iconBtn} title="행 삭제">
+              <button
+                type="button"
+                onClick={() => removeRow(row.id)}
+                style={styles.iconBtn}
+                title="행 삭제"
+              >
                 🗑️
               </button>
             </div>
@@ -81,9 +90,10 @@ const Scope2Card = ({ initialValue }) => {
         ))}
       </div>
 
+      {/* 합계 + 추가 버튼 */}
       <div style={styles.footerRow}>
         <div style={styles.totalBox}>
-          합계 <strong>{isNaN(totalKwh) ? 0 : totalKwh}</strong> kWh
+          합계 <strong>{isNaN(totalKwh) ? 0 : totalKwh}</strong> {rowUnit}
         </div>
         <button type="button" onClick={addRow} style={styles.addBtn}>＋</button>
       </div>
@@ -93,7 +103,8 @@ const Scope2Card = ({ initialValue }) => {
 
 const styles = {
   card: { border: '1px solid #e5e7eb', borderRadius: 12, background: '#fff', padding: 16 },
-  header: { marginBottom: 12 },
+  headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+
   badge: {
     display: 'inline-block',
     border: '1px solid #e5e7eb',
@@ -102,30 +113,46 @@ const styles = {
     fontSize: 12,
     background: '#fafafa',
   },
+
+  subHeader: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: 8,
+    marginTop: 10,
+    marginBottom: 12,
+  },
+  headerTitle: { fontSize: 16, color: '#111827' },
+  headerUnit: { fontSize: 12, color: '#6b7280' },
+
+  table: { display: 'flex', flexDirection: 'column', gap: 12 },
+  tableRow: { display: 'flex', gap: 8, alignItems: 'center' },
+
+  inputCol: { flex: 1, display: 'flex', flexDirection: 'column', gap: 6 },
+  label: { fontSize: 13, color: '#6b7280' },
+
+  inputRow: { display: 'flex', alignItems: 'center', gap: 8 },
   input: {
-    height: 32,
-    borderRadius: 8,
+    width: 250, // ✅ input 가로 크기 줄임 (원하는 값으로 조정 가능)
+    height: 36,
+    borderRadius: 10,
     border: '1px solid #e5e7eb',
-    padding: '0 8px',
-    width: '100%',
+    padding: '0 12px',
     fontSize: 13,
     boxSizing: 'border-box',
   },
-  table: { display: 'flex', flexDirection: 'column', gap: 8 },
-  tableHead: {
-    display: 'flex', gap: 8, fontSize: 12, color: '#6b7280', padding: '0 6px',
-  },
-  tableRow: { display: 'flex', gap: 8, alignItems: 'center' },
+  textUnit: { fontSize: 13, color: '#6b7280' },
+
   iconBtn: {
-    width: 32, height: 32, borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
+    width: 36, height: 36, borderRadius: 10, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
   },
+
   footerRow: { marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
   totalBox: {
     fontSize: 13, color: '#111827', background: '#f9fafb',
-    border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 10px',
+    border: '1px solid #e5e7eb', borderRadius: 10, padding: '6px 10px',
   },
   addBtn: {
-    width: 36, height: 36, borderRadius: 18, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',
+    width: 44, height: 44, borderRadius: 999, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 22,
   },
 };
 

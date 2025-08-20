@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_yasg',
     'accounts',
+    'buildings',
+    'emissions',
 ]
 
 MIDDLEWARE = [
