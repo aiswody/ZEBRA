@@ -29,3 +29,5 @@ class Account(models.Model):
 
     def __str__(self):
         return f"{self.manager_name} @ {self.institution.name}"
+
+

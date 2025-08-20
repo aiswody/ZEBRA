@@ -3,6 +3,7 @@
 import React from "react";
 import { Building2, ClipboardList, Flame } from "lucide-react"; // 아이콘 불러오기
 import { Search, LayoutDashboard, Download } from "lucide-react";
+import ProfileCard from '../Profile/profile';
 
 const HEADER_H = 64;
 const TOP_SAFE = 16;
@@ -19,6 +20,8 @@ export default function Sidebar({ activePage, setActivePage }) {
         <Search size={16} style={sx.searchIcon} />
         <input type="search" placeholder="검색" style={sx.searchInput} />
       </div>
+
+      <ProfileCard variant="sidebar" showActions={false} />
 
       <h4 style={sx.title}>Menu</h4>
 

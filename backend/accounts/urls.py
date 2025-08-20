@@ -8,8 +8,10 @@ class IdTokenObtainPairView(TokenObtainPairView):
     serializer_class = IdTokenObtainPairSerializer
 
 urlpatterns = [
-    path("register", register),                 # POST
-    path("login", IdTokenObtainPairView.as_view()),  # POST (id or username, password)
-    path("refresh", TokenRefreshView.as_view()),     # POST (refresh)
-    path("me", me),                              # GET  (Bearer <access>)
+    path("register/", register),                 # POST
+    path("login/", IdTokenObtainPairView.as_view()),  # POST (id or username, password)
+    path("refresh/", TokenRefreshView.as_view()),     # POST (refresh)
+    path("me/", me),                              # GET  (Bearer <access>)
 ]
+
+

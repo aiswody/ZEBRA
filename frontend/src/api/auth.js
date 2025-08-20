@@ -8,7 +8,7 @@ export async function register(payload) {
 
 // 로그인
 export async function login({ username, password }) {
-  const { data } = await api.post("/auth/login", { username, password });
+  const { data } = await api.post("/auth/login/", { username, password });
   // 토큰 localStorage에 저장
   localStorage.setItem("access", data.access);
   localStorage.setItem("refresh", data.refresh);

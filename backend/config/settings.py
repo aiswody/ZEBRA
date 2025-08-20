@@ -143,3 +143,8 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+
+# settings.py
+SIMPLE_JWT = {
+    "UPDATE_LAST_LOGIN": True,   # 로그인 토큰 발급 시 last_login 업데이트
+}

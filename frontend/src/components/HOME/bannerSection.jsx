@@ -1,20 +1,21 @@
 import React from 'react';
 import leafImg from '../../assets/leaf.png';
 import { Link, useNavigate } from 'react-router-dom';
-import { login, fetchMe } from '../../api/auth';
+import { useAuth } from '../../contexts/authContext';
+import UserCard from './userCard'; // 로그인 후 카드
 
 const BannerSection = () => {
   const navigate = useNavigate();
+  const { user, signIn, isAuthenticated, loading, signOut } = useAuth();
+
   const [id, setId] = React.useState(() => localStorage.getItem('userId') || '');
   const [password, setPassword] = React.useState('');
   const [saveId, setSaveId] = React.useState(!!localStorage.getItem('userId'));
-  const [loading, setLoading] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
 
   const handleSignUp = (e) => {
     e.preventDefault();
-    if (saveId && id.trim()) {
-      localStorage.setItem('userId', id.trim());
-    }
+    if (saveId && id.trim()) localStorage.setItem('userId', id.trim());
     navigate('/signup');
   };
 
@@ -24,28 +25,23 @@ const BannerSection = () => {
       return;
     }
     try {
-      setLoading(true);
-      // 백엔드 로그인 (username으로 보냄)
-      await login({ username: id, password });
-      const me = await fetchMe();
-      // 아이디 저장 옵션 처리
+      setSubmitting(true);
+      const me = await signIn({ username: id, password });
       if (saveId) localStorage.setItem('userId', id.trim());
       else localStorage.removeItem('userId');
-
       alert(`${me.managerName}님 환영합니다!`);
-      // 필요 시 메인/대시보드로 이동
-      // navigate('/dashboard');
+      navigate('/');
     } catch (e) {
       console.error(e);
       alert('로그인에 실패했습니다.');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
   return (
     <div style={styles.bannerContainer}>
-      {/* 왼쪽 배너 문구 */}
+      {/* 왼쪽 배너 */}
       <div style={styles.leafContainer}>
         <img src={leafImg} alt="Leaf" style={styles.leafImage1} />
         <img src={leafImg} alt="Leaf" style={styles.leafImage2} />
@@ -59,56 +55,63 @@ const BannerSection = () => {
         />
       </div>
 
-      {/* 오른쪽 로그인 박스 */}
-      <div style={styles.right}>
-        <div style={styles.loginTabs}>
-          <button style={{ ...styles.tabButton, backgroundColor: '#0F4D2A', color: 'white' }}>포털 로그인</button>
-        </div>
+      {/* 오른쪽: 로그인 전/후 래퍼를 다르게 */}
+      <div style={isAuthenticated ? styles.rightAuth : styles.right}>
+        {loading ? null : (
+          isAuthenticated ? (
+            <UserCard user={user} signOut={signOut} />
+          ) : (
+            <>
+              <div style={styles.loginTabs}>
+                <button style={{ ...styles.tabButton, backgroundColor: '#0F4D2A', color: 'white' }}>
+                  포털 로그인
+                </button>
+              </div>
 
-        <input
-          placeholder="ID"
-          value={id}
-          onChange={(e) => setId(e.target.value)}
-          style={styles.input}
-        />
-        <input
-          placeholder="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
-        />
+              <input
+                placeholder="ID"
+                value={id}
+                onChange={(e) => setId(e.target.value)}
+                style={styles.input}
+              />
+              <input
+                placeholder="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={styles.input}
+              />
 
-        <button
-          style={{ ...styles.loginButton, opacity: loading ? 0.6 : 1 }}
-          onClick={handleLogin}
-          disabled={loading}
-        >
-          {loading ? '처리 중...' : '로그인'}
-        </button>
+              <button
+                style={{ ...styles.loginButton, opacity: submitting ? 0.6 : 1 }}
+                onClick={handleLogin}
+                disabled={submitting}
+              >
+                {submitting ? '처리 중...' : '로그인'}
+              </button>
 
-        {/* 아이디 저장 + 회원가입 한 줄 정렬 */}
-        <div style={styles.loginOptions}>
-          <label style={styles.inlineLeft}>
-            <input
-              type="checkbox"
-              checked={saveId}
-              onChange={(e) => setSaveId(e.target.checked)}
-              style={{ marginRight: 6 }}
-            />
-            아이디 저장
-          </label>
+              <div style={styles.loginOptions}>
+                <label style={styles.inlineLeft}>
+                  <input
+                    type="checkbox"
+                    checked={saveId}
+                    onChange={(e) => setSaveId(e.target.checked)}
+                    style={{ marginRight: 6 }}
+                  />
+                  아이디 저장
+                </label>
 
-          {/* 회원가입 링크 */}
-          <Link to="/signup" onClick={handleSignUp} style={styles.signUpLink}>
-            회원가입
-          </Link>
-        </div>
+                <Link to="/signup" onClick={handleSignUp} style={styles.signUpLink}>
+                  회원가입
+                </Link>
+              </div>
 
-        {/* (선택) 아이디/비밀번호 찾기 */}
-        <div style={styles.findRow}>
-          <Link to="/find-account" style={styles.findLink}>아이디 / 비밀번호 찾기</Link>
-        </div>
+              <div style={styles.findRow}>
+                <Link to="/find-account" style={styles.findLink}>아이디 / 비밀번호 찾기</Link>
+              </div>
+            </>
+          )
+        )}
       </div>
     </div>
   );
@@ -127,10 +130,6 @@ const styles = {
     position: 'relative',
     display: 'inline-block',
     marginBottom: '24px',
-  },
-  left: {
-    flex: 1,
-    padding: '40px',
   },
   bannerText: {
     fontFamily: "'Orbitron', sans-serif",
@@ -151,7 +150,6 @@ const styles = {
     height: 'auto',
     zIndex: 0,
     filter: 'drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.2))',
-    marginBottom: '20px',
   },
   leafImage2: {
     position: 'absolute',
@@ -161,7 +159,6 @@ const styles = {
     height: 'auto',
     zIndex: 0,
     filter: 'drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.2))',
-    marginBottom: '20px',
     transform: 'scaleX(-1)',
   },
   searchBox: {
@@ -171,6 +168,8 @@ const styles = {
     width: '50%',
     fontSize: '14px',
   },
+
+  // 로그인 전: 카드 스타일(흰 배경/패딩/그림자)
   right: {
     flex: '0 0 300px',
     backgroundColor: 'white',
@@ -179,10 +178,24 @@ const styles = {
     boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
     textAlign: 'center',
     position: 'relative',
+    // minHeight: 360, // 선택: 전후 높이감 맞추고 싶으면 유지
   },
+
+  // 로그인 후: 바깥은 투명 레이아웃만(이중 카드 방지)
+  rightAuth: {
+    flex: '0 0 300px',
+    background: 'transparent',
+    padding: 0,
+    borderRadius: 0,
+    boxShadow: 'none',
+    textAlign: 'center',
+    position: 'relative',
+  },
+
   loginTabs: {
     display: 'flex',
     marginBottom: '12px',
+    justifyContent: 'flex-start',
   },
   tabButton: {
     width: '30%',
@@ -195,23 +208,26 @@ const styles = {
     boxShadow: '2px 4px 10px rgba(0, 0, 0, 0.2)',
     opacity: '0.75',
   },
+
   input: {
-    width: '100%',
-    padding: '10px',
-    marginBottom: '10px',
-    borderRadius: '6px',
-    border: '1px solid #ddd',
-  },
+  width: '90%',
+  padding: '10px',
+  margin: '0 auto 10px',  // 가로 중앙 정렬
+  borderRadius: '6px',
+  border: '1px solid #ddd',
+},
+
   loginButton: {
-    width: '100%',
-    padding: '10px',
-    backgroundColor: '#0F4D2A',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    marginBottom: '12px',
-  },
+  width: '98%',              // input이랑 동일
+  padding: '10px',
+  backgroundColor: '#0F4D2A',
+  color: 'white',
+  border: 'none',
+  borderRadius: '6px',
+  cursor: 'pointer',
+  margin: '0 auto 12px',     // 가운데 정렬
+  display: 'block',          // 버튼도 block 처리해서 margin auto 적용
+},
   loginOptions: {
     display: 'flex',
     alignItems: 'center',
@@ -237,13 +253,6 @@ const styles = {
   findLink: {
     textDecoration: 'none',
     color: '#4b5563',
-  },
-  cowImage: {
-    position: 'absolute',
-    bottom: '-60px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    height: '60px',
   },
 };
 

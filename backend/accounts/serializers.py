@@ -71,11 +71,36 @@ class RegisterSerializer(serializers.Serializer):
             }
         }
 
-class MeSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    username = serializers.CharField()
-    email = serializers.EmailField()
-    managerName = serializers.CharField()
-    department = serializers.CharField(allow_blank=True)
-    phoneNumber = serializers.CharField(allow_blank=True)
-    institution = InstitutionSerializer()
+class MeSerializer(serializers.ModelSerializer):
+    # User 테이블
+    id = serializers.IntegerField(source="user.id")
+    username = serializers.CharField(source="user.username")
+    email = serializers.EmailField(source="user.email")
+    lastLoginAt = serializers.DateTimeField(source="user.last_login", allow_null=True)
+
+    # Account 자체 필드
+    managerName = serializers.CharField(source="manager_name")
+    department = serializers.CharField(allow_blank=True)  # source 불필요 (같은 이름)
+    phoneNumber = serializers.CharField(allow_blank=True, source="phone_number")
+
+    # Institution
+    institutionId = serializers.IntegerField(source="institution.id")
+    institutionName = serializers.CharField(source="institution.name")
+    institutionType = serializers.CharField(source="institution.type")
+    institutionAddress = serializers.CharField(source="institution.address", allow_blank=True)
+
+    role = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Account
+        fields = (
+            "id", "username", "email",
+            "managerName", "department", "phoneNumber",
+            "role", "lastLoginAt",
+            "institutionId", "institutionName", "institutionType", "institutionAddress",
+        )
+
+    def get_role(self, obj):
+        return getattr(obj, "role", "관리자")
+
+

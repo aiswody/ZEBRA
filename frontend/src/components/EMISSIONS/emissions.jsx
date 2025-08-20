@@ -51,10 +51,8 @@ export default function Emissions({
   };
 
   return (
-    <div style={layout.container}>
-      {/* 사이드바: 섹션 전환 담당 */}
+    <div style={{ ...layout.container, textAlign: 'left', alignItems: 'flex-start' }}>
       <Esidebar activePage={section} setActivePage={setSection} />
-
       <main style={layout.main}>
         {section === "dashboard" ? (
           <>
