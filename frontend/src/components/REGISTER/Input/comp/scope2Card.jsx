@@ -13,7 +13,6 @@ const numberOnly = (v) => {
 const Scope2Card = ({
   initialValue,
   title = '전기',
-  unitLabel = '단위',
   rowUnit = 'kWh',
 }) => {
   const [rows, setRows] = useState([{ id: 1, name: '', kwh: '' }]);
@@ -48,10 +47,9 @@ const Scope2Card = ({
         <span style={styles.badge}>Scope 2</span>
       </div>
 
-      {/* 전기 / 단위 */}
+      {/* 상단 제목: 전기 */}
       <div style={styles.subHeader}>
         <strong style={styles.headerTitle}>{title}</strong>
-        <span style={styles.headerUnit}>{unitLabel}</span>
       </div>
 
       {/* 입력부 */}
@@ -59,9 +57,13 @@ const Scope2Card = ({
         {rows.map((row) => (
           <div key={row.id} style={styles.tableRow}>
             <div style={styles.inputCol}>
-              {/* 위 라벨 */}
-              <label style={styles.label}>사용량</label>
-              {/* input + 단위 */}
+              {/* 라벨 행 */}
+              <div style={styles.labelRow}>
+                <label style={styles.label}>사용량</label>
+                <span style={styles.label}>단위</span>
+              </div>
+
+              {/* 입력 + 단위 행 */}
               <div style={styles.inputRow}>
                 <input
                   type="text"
@@ -71,7 +73,7 @@ const Scope2Card = ({
                   onChange={(e) => updateRow(row.id, { kwh: numberOnly(e.target.value) })}
                   style={styles.input}
                 />
-                <span style={styles.textUnit}>{rowUnit}</span>
+                <span style={styles.unitText}>{rowUnit}</span>
               </div>
             </div>
 
@@ -117,22 +119,22 @@ const styles = {
   subHeader: {
     display: 'flex',
     alignItems: 'baseline',
-    gap: 8,
     marginTop: 10,
     marginBottom: 12,
   },
   headerTitle: { fontSize: 16, color: '#111827' },
-  headerUnit: { fontSize: 12, color: '#6b7280' },
 
   table: { display: 'flex', flexDirection: 'column', gap: 12 },
-  tableRow: { display: 'flex', gap: 8, alignItems: 'center' },
+  tableRow: { display: 'flex', gap: 8, alignItems: 'flex-start' },
 
   inputCol: { flex: 1, display: 'flex', flexDirection: 'column', gap: 6 },
+
+  labelRow: { display: 'flex', justifyContent: 'space-between' },
   label: { fontSize: 13, color: '#6b7280' },
 
-  inputRow: { display: 'flex', alignItems: 'center', gap: 8 },
+  inputRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   input: {
-    width: 250, // ✅ input 가로 크기 줄임 (원하는 값으로 조정 가능)
+    flex: 1,
     height: 36,
     borderRadius: 10,
     border: '1px solid #e5e7eb',
@@ -140,7 +142,7 @@ const styles = {
     fontSize: 13,
     boxSizing: 'border-box',
   },
-  textUnit: { fontSize: 13, color: '#6b7280' },
+  unitText: { fontSize: 13, color: '#6b7280', minWidth: 40, textAlign: 'right' },
 
   iconBtn: {
     width: 36, height: 36, borderRadius: 10, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer',

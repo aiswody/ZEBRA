@@ -1,26 +1,12 @@
 // 건물 등록 UI + 우측 건물 목록 + 카카오 키워드 검색 + 하단 지도
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../../contexts/authContext';
-import { api } from '../../../api/client'
+import { api } from '../../../api/client';
 
 /** ─────────── 설정 ─────────── */
-const API_BASE = process.env.REACT_APP_API_BASE ?? '/api';
-const BUILDINGS_API = `${(API_BASE || '').replace(/\/$/, '')}/buildings/`;
+const BUILDINGS_API = '/buildings/';               // client.js baseURL이 /api 이므로 상대경로만 사용
 const KAKAO_KEY = '6bfadcc55e6a410027178ce3208a469e';
 const MOCK_KEY = 'mockBuildings';                  // 서버 미동작 시 로컬 저장 키
-
-/** JWT 헤더 헬퍼 */
-function getAuthHeaders(extra = {}) {
-  try {
-    // useAuth()에 토큰이 있으면 우선 사용하고, 없으면 localStorage에서 가져오기
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('access');
-    return token
-      ? { Authorization: `Bearer ${token}`, Accept: 'application/json', ...extra }
-      : { Accept: 'application/json', ...extra };
-  } catch {
-    return { Accept: 'application/json', ...extra };
-  }
-}
 
 /** Kakao SDK 로더 */
 function loadKakaoSDK(appKey) {
@@ -29,8 +15,7 @@ function loadKakaoSDK(appKey) {
       return resolve(window.kakao);
     }
     const script = document.createElement('script');
-    script.src =
-      `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false&libraries=services`;
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false&libraries=services`;
     script.async = true;
     script.onload = () => {
       if (!(window.kakao && window.kakao.maps)) {
@@ -47,45 +32,56 @@ function loadKakaoSDK(appKey) {
   });
 }
 
-/** 서버/로컬 공통 유틸 */
- async function safeGetList() {
-     try {
-       // client.js의 baseURL이 '/api' 라면 여기엔 '/buildings/' 만 써도 됩니다.
-       const { data } = await api.get('/buildings/');
-       if (Array.isArray(data)) return data;
-       if (data && Array.isArray(data.results)) return data.results;
-       return [];
-     } catch (e) {
-       const raw = localStorage.getItem(MOCK_KEY);
-       return raw ? JSON.parse(raw) : [];
-     }
-   }
-    async function safeAdd(payload) {
-       try {
-         const { data } = await api.post('/buildings/', payload);
-         return data;
-       } catch (e) {
-         const item = {
-           id: Date.now(),
-           name: payload.name,
-           usage: payload.use_type || 'OTHER',
-           usageLabel: payload.use_type || '기타',
-           address: payload.address || '',
-         };
-         const list = await safeGetList();
-         const next = [...list, item];
-         localStorage.setItem(MOCK_KEY, JSON.stringify(next));
-         return item;
-       }
-     }
-      async function safeDelete(id) {
-         try {
-           await api.delete(`/buildings/${id}/`);
-         } catch (e) {
-           const list = await safeGetList();
-           localStorage.setItem(MOCK_KEY, JSON.stringify(list.filter(b => String(b.id) !== String(id))));
-         }
-       }
+/** 서버/로컬 공통 유틸 (axios api 사용) */
+async function safeGetList() {
+  try {
+    const { data } = await api.get(BUILDINGS_API);
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.results)) return data.results;
+    return [];
+  } catch (e) {
+    const raw = localStorage.getItem(MOCK_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }
+}
+
+const usageLabelMap = {
+  OFFICE: '업무 시설',
+  EDU_RESEARCH: '교육 연구 시설',
+  CULTURE_ASSEMBLY: '문화 및 집회시설',
+  MEDICAL: '의료 시설',
+  TRAINING: '수련 시설',
+  TRANSPORT: '운수 시설',
+};
+
+async function safeAdd(payload) {
+  try {
+    const { data } = await api.post(BUILDINGS_API, payload);
+    return data;
+  } catch (e) {
+    // 로컬 fallback (개발용)
+    const item = {
+      id: Date.now(),
+      name: payload.name,
+      usage: payload.use_type || 'OTHER',
+      usageLabel: usageLabelMap[payload.use_type] || '기타',
+      address: payload.address || '',
+    };
+    const list = await safeGetList();
+    const next = [...list, item];
+    localStorage.setItem(MOCK_KEY, JSON.stringify(next));
+    return item;
+  }
+}
+
+async function safeDelete(id) {
+  try {
+    await api.delete(`${BUILDINGS_API}${id}/`);
+  } catch (e) {
+    const list = await safeGetList();
+    localStorage.setItem(MOCK_KEY, JSON.stringify(list.filter(b => String(b.id) !== String(id))));
+  }
+}
 
 /** 한글 라벨 → 백엔드 enum 코드 매핑 */
 const usageMap = {
@@ -159,7 +155,7 @@ const Building = () => {
         setLoadError('');
         const data = await safeGetList();
         setList(data);
-        if (data.length === 0) setLoadError('건물 목록을 가져오지 못했습니다.');
+        // 빈 목록은 정상 케이스이므로 에러 메시지 표시 안 함
       } catch {
         setLoadError('건물 목록을 가져오지 못했습니다.');
       } finally {

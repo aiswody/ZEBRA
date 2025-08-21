@@ -104,7 +104,7 @@ const TierSection = ({
       <div style={styles.table}>
         <div style={styles.tableHead}>
           <div style={{ flex: 2 }}>종류</div>
-          <div style={{ flex: 1, whiteSpace: 'nowrap' }}>{unitLabel}</div>
+          <div style={{ flex: 1, whiteSpace: 'nowrap' }}>단위</div>
           <div style={{ flex: 2 }}>사용량</div>
           <div style={{ width: 40 }} />
         </div>

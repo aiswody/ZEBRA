@@ -1,30 +1,26 @@
 import { api } from "./client";
 
-// 회원가입
 export async function register(payload) {
   const { data } = await api.post("/auth/register", payload);
   return data;
 }
 
-// 로그인
 export async function login({ username, password }) {
   const { data } = await api.post("/auth/login/", { username, password });
-  // 토큰 localStorage에 저장
-  localStorage.setItem("access", data.access);
-  localStorage.setItem("refresh", data.refresh);
-  localStorage.setItem("accessToken", data.access); 
+  localStorage.setItem("accessToken", data.access);
+  localStorage.setItem("refreshToken", data.refresh);
   return data;
 }
 
-// 내 정보 가져오기
 export async function fetchMe() {
   const { data } = await api.get("/auth/me");
   return data;
 }
 
-// 로그아웃
 export function logout() {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  // (선택) 레거시 키 청소
   localStorage.removeItem("access");
   localStorage.removeItem("refresh");
-  localStorage.removeItem("accessToken");
 }
