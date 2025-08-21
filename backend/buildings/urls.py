@@ -8,4 +8,4 @@ router.register(r"buildings", BuildingViewSet, basename="building")
 urlpatterns = [
     path("buildings/meta/", BuildingMetaView.as_view(), name="buildings-meta"),
     path("", include(router.urls)),
-]
+] #우웩
