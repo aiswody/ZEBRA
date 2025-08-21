@@ -1,50 +1,42 @@
-// 사용량 입력 컨트롤러
-
-/*
-백엔드 연동, 사용 방법 (나중에 서버 붙일 때)
-input.jsx에서 activeBuildingId가 정해지면 서버에서 GET /energy-inputs로 데이터 가져와 energyDataMap[id]에 넣어주고, 그걸 initialValue로 내려주면 자동으로 채워짐.
-건물 바꿀 때는 key로 리마운트되므로 항상 해당 건물 기준으로 초기화/채움 동작이 보장돼.
-필요하면 자동 저장(PATCH) 콜백까지 바로 붙여줄게.
-*/
-
-
+// 사용량 입력 컨트롤러 (백엔드 연동 버전)
 import React, { useEffect, useState } from 'react';
 import BuildingList from './comp/buildingList';
 import InfoBubble from './comp/infoBubble';
 import Scope1Card from './comp/scope1Card';
 import Scope2Card from './comp/scope2Card';
 import AreaCard from './comp/areaCard';
+import { api } from '../../../api/client'; // ← 경로 확인해서 맞추세요
 
 const Input = () => {
   const [buildings, setBuildings] = useState([]);
   const [activeBuildingId, setActiveBuildingId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // TODO: 실제 API 연동 시 여기만 바꾸면 됨
+  // 백엔드에서 건물 목록 불러오기
   const fetchBuildings = async () => {
-    return [
-      { id: 'b1', name: '동국대학교 원흥관1' },
-      { id: 'b2', name: '동국대학교 원흥관3' },
-      { id: 'b3', name: '동국대학교 신공학관' },
-      { id: 'b4', name: '동국대학교 혜화관' },
-      { id: 'b5', name: '동국대학교 중앙도서관' },
-    ];
+    const { data } = await api.get('/buildings/'); // client.js baseURL = /api
+    const rows = Array.isArray(data) ? data : (data?.results || []);
+    // BuildingList가 name/usageLabel/address를 쓰면 그대로 전달 가능
+    return rows.map(({ id, name, usageLabel, address }) => ({
+      id, name, usageLabel, address,
+    }));
   };
 
-  // 👉 나중에 서버에서 불러온 값을 여기에 저장해두고, 아래 initialValue로 내려주면 됨
-  // 예: { [buildingId]: { scope1: {...}, scope2: {...}, area: {...} } }
-  const [energyDataMap] = useState({}); // 현재는 비워둠
+  // 서버에서 불러온 초기 값: { [buildingId]: { scope1, scope2, area } }
+  // (아직 미연동이라 빈 객체)
+  const [energyDataMap] = useState({});
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const data = await fetchBuildings();
+        setLoading(true);
+        const list = await fetchBuildings();
         if (!mounted) return;
-        setBuildings(data);
-        setActiveBuildingId(data?.[0]?.id ?? null);
+        setBuildings(list);
+        setActiveBuildingId(list?.[0]?.id ?? null);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     })();
     return () => { mounted = false; };
@@ -74,17 +66,17 @@ const Input = () => {
         <div style={styles.bottomLeft}>
           {/* 건물 변경 시 리마운트 → 폼 초기화, 서버 값 있으면 initialValue로 hydrate */}
           <Scope1Card
-            key={`s1-${activeBuildingId || 'none'}`}
+            key={`s1-${activeBuildingId || 'none'}`}    // ← 문자열 템플릿 수정
             initialValue={currentInitial?.scope1}
           />
         </div>
         <div style={styles.bottomRight}>
           <Scope2Card
-            key={`s2-${activeBuildingId || 'none'}`}
+            key={`s2-${activeBuildingId || 'none'}`}    // ← 문자열 템플릿 수정
             initialValue={currentInitial?.scope2}
           />
           <AreaCard
-            key={`area-${activeBuildingId || 'none'}`}
+            key={`area-${activeBuildingId || 'none'}`}  // ← 문자열 템플릿 수정
             initialValue={currentInitial?.area}
           />
         </div>

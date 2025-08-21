@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from drf_yasg import openapi
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -42,7 +43,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'accounts',
     'buildings',
-    'emissions',
+    'activities',
 ]
 
 MIDDLEWARE = [
@@ -148,5 +149,9 @@ SWAGGER_SETTINGS = {
 
 # settings.py
 SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),   # ← 예: 60분
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),      # ← 예: 7일
+    "ROTATE_REFRESH_TOKENS": True,                    # 선택: 리프레시 회전
+    "BLACKLIST_AFTER_ROTATION": True, 
     "UPDATE_LAST_LOGIN": True,   # 로그인 토큰 발급 시 last_login 업데이트
 }
