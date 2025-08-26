@@ -1,5 +1,3 @@
-// tierSection.jsx
-
 import React, { useEffect, useMemo, useState } from 'react';
 
 const numberOnly = (v) => {
@@ -13,32 +11,27 @@ const numberOnly = (v) => {
 
 const TierSection = ({
   title,
-  unitLabel = 'ton (단위)',
+  unit = 'unit',
   fuelOptions = [],
   getFieldsForTier, // (tier) => [{ key, label, unit, placeholder }]
-  initialValue,     // 👉 { tier, sectionValues, rows }
+  initialValue,     // { tier, unit, sectionValues, rows }
+  onChange,
 }) => {
   const [tier, setTier] = useState(1);
   const fields = useMemo(() => getFieldsForTier?.(tier) ?? [], [tier, getFieldsForTier]);
   const [sectionValues, setSectionValues] = useState({});
   const [rows, setRows] = useState([{ id: 1, fuelType: '', amount: '' }]);
 
-  // 👉 initialValue가 바뀔 때 폼 상태를 서버값으로 hydrate
+  // hydrate
   useEffect(() => {
     if (!initialValue) {
-      // 없으면 기본값(빈 폼)
       setTier(1);
       setSectionValues({});
       setRows([{ id: 1, fuelType: '', amount: '' }]);
       return;
     }
-    // tier
-    setTier(
-      initialValue.tier && [1,2,3].includes(initialValue.tier) ? initialValue.tier : 1
-    );
-    // sectionValues
+    setTier(initialValue.tier && [1,2,3].includes(initialValue.tier) ? initialValue.tier : 1);
     setSectionValues(initialValue.sectionValues || {});
-    // rows
     const initRows = Array.isArray(initialValue.rows) && initialValue.rows.length
       ? initialValue.rows.map((r, idx) => ({
           id: r.id ?? Date.now() + idx,
@@ -56,6 +49,11 @@ const TierSection = ({
 
   const onChangeSectionVal = (k, v) =>
     setSectionValues((s) => ({ ...s, [k]: numberOnly(v) }));
+
+  // 상위로 알림
+  useEffect(() => {
+    onChange?.({ tier, unit, sectionValues, rows });
+  }, [tier, unit, sectionValues, rows, onChange]);
 
   return (
     <div style={styles.card}>
@@ -103,14 +101,14 @@ const TierSection = ({
       {/* 연료행 테이블 */}
       <div style={styles.table}>
         <div style={styles.tableHead}>
-          <div style={{ flex: 2 }}>종류</div>
-          <div style={{ flex: 1, whiteSpace: 'nowrap' }}>단위</div>
-          <div style={{ flex: 2 }}>사용량</div>
+          <div style={{ marginLeft: 20, flex: 6 }}>종류</div>
+          <div style={{ flex: 1, marginLeft: 10, whiteSpace: 'nowrap', }}>사용량</div>
+          <div style={{ flex: 1, whiteSpace: 'nowrap', marginLeft: 10, }}>단위</div>
           <div style={{ width: 40 }} />
         </div>
         {rows.map((row) => (
           <div key={row.id} style={styles.tableRow}>
-            <div style={{ flex: 4 }}>
+            <div style={{ flex: 3 }}>
               <select
                 value={row.fuelType}
                 onChange={(e) => updateRow(row.id, { fuelType: e.target.value })}
@@ -122,12 +120,7 @@ const TierSection = ({
                 ))}
               </select>
             </div>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', color: '#6b7280', whiteSpace: 'nowrap', 
-              fontSize: 13,    }}>
 
-
-              {unitLabel.replace(' (단위)', '')}
-            </div>
             <div style={{ flex: 2 }}>
               <input
                 type="text"
@@ -138,6 +131,11 @@ const TierSection = ({
                 style={styles.input}
               />
             </div>
+
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', color: '#6b7280', whiteSpace: 'nowrap', fontSize: 13 }}>
+              {unit}
+            </div>
+
             <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
               <button type="button" onClick={() => removeRow(row.id)} style={styles.iconBtn} title="행 삭제">
                 🗑️
@@ -190,13 +188,9 @@ const styles = {
   },
   table: { display: 'flex', flexDirection: 'column', gap: 8 },
   tableHead: {
-    display: 'flex',
-    gap: 8,
-    fontSize: 12,
-    color: '#6b7280',
-    padding: '0 6px',
+    display: 'flex', gap: 10, fontSize: 12, color: '#6b7280', padding: '0 6px',
   },
-  tableRow: { display: 'flex', gap: 6, alignItems: 'center' },
+  tableRow: { display: 'flex', gap: 6, alignItems: 'center',},
   addRowWrap: { display: 'flex', justifyContent: 'flex-end', marginTop: 10 },
   addBtn: {
     width: 32, height: 32, borderRadius: 18, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 22,

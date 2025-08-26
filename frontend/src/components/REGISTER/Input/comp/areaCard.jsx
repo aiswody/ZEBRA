@@ -1,4 +1,4 @@
-// 면적 입력 컴포넌트
+//면적 입력 컴포넌트
 
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -11,11 +11,11 @@ const numberOnly = (v) => {
   return decPart.length > 4 ? `${intPart}.${decPart.slice(0, 4)}` : cleaned;
 };
 
-const AreaCard = ({ initialValue }) => {
+const AreaCard = ({ initialValue, onChange }) => {
   const [gross, setGross] = useState('');
   const [conditioned, setConditioned] = useState('');
 
-  // 👉 initialValue가 바뀌면 서버값으로 hydrate
+  // hydrate
   useEffect(() => {
     if (!initialValue) {
       setGross('');
@@ -33,6 +33,10 @@ const AreaCard = ({ initialValue }) => {
     const r = (c / g) * 100;
     return isNaN(r) ? '' : r.toFixed(1);
   }, [gross, conditioned]);
+
+  useEffect(() => {
+    onChange?.({ gross, conditioned });
+  }, [gross, conditioned, onChange]);
 
   return (
     <div style={styles.card}>

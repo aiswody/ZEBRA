@@ -13,7 +13,7 @@ export default function Graph3({ scope1 = 48, scope2 = 52 }) {
     { name: "SCOPE1", value: s1 },
     { name: "SCOPE2", value: s2 },
   ];
-  const COLORS = ["#a7f3d0", "#16a34a"];
+  const COLORS = ["#15803cda", "#D1D5DB"];
 
   return (
     <div style={card}>

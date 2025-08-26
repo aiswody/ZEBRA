@@ -2,6 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/authContext';
+import Ariana from "../../assets/ariana.png"
 
 function formatKST(iso) {
   if (!iso) return '-';
@@ -90,6 +91,7 @@ const styles = {
     position: 'relative',
   },
   avatar: {
+    
     width: 48,
     height: 48,
     borderRadius: '50%',
@@ -146,7 +148,7 @@ const styles = {
 
 
   logoutBtn: {
-    marginTop: 60,
+    marginTop: 20,
     width: '100%',
     padding: '12px 0',
     background: '#185c37',

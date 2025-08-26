@@ -10,11 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
+from dotenv import load_dotenv
 from pathlib import Path
 from drf_yasg import openapi
 from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -25,6 +28,13 @@ SECRET_KEY = 'django-insecure-tc+vi3q+qc^yl_t7(4ry-7y+-keb%qh5j0$f_)@c!va@5*=*28
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+"""
+env쓸때 바꿀 코드
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+DEBUG = os.getenv("DEBUG", "False") == "True"
+"""
+
+
 
 ALLOWED_HOSTS = []
 
@@ -44,6 +54,7 @@ INSTALLED_APPS = [
     'accounts',
     'buildings',
     'activities',
+    'chatbot',
 ]
 
 MIDDLEWARE = [
@@ -60,9 +71,13 @@ MIDDLEWARE = [
 CORS_ALLOW_ALL_ORIGINS = True  # 개발 단계에서만 전체 허용
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
+    "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    )
+    ],
+    
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }
 
 ROOT_URLCONF = 'config.urls'
@@ -155,3 +170,5 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True, 
     "UPDATE_LAST_LOGIN": True,   # 로그인 토큰 발급 시 last_login 업데이트
 }
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

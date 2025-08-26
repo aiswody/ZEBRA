@@ -51,7 +51,7 @@ export default function Sidebar({ activePage, setActivePage }) {
             onClick={() => setActivePage("input")}
             style={activePage === "input" ? sx.childActive : sx.child}
           >
-            - 연소 사용량 입력
+            - 연료 사용량 입력
           </button>
         </div>
 
@@ -72,7 +72,7 @@ export default function Sidebar({ activePage, setActivePage }) {
           style={activePage === "fuel" ? sx.activeItem : sx.item}
         >
           <span style={sx.itemIcon}><Flame size={16} /></span>
-          <span>연료 사용량 관리</span>
+          <span>사용량 관리</span>
         </button>
       </nav>
     </aside>

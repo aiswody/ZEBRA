@@ -272,7 +272,7 @@ const Building = () => {
 
         {/* 키워드 검색 + 제안 */}
         <div style={{ ...styles.section, position:'relative' }}>
-          <label>위치 검색</label>
+          <label>지도 위치 검색</label>
           <input
             type="text"
             value={keyword}

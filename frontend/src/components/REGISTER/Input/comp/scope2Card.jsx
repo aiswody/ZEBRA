@@ -1,4 +1,5 @@
-// Scope2 입력 컴포넌트
+//scope2 입력 컴포넌트
+
 import React, { useEffect, useMemo, useState } from 'react';
 
 const numberOnly = (v) => {
@@ -14,6 +15,7 @@ const Scope2Card = ({
   initialValue,
   title = '전기',
   rowUnit = 'kWh',
+  onChange,
 }) => {
   const [rows, setRows] = useState([{ id: 1, name: '', kwh: '' }]);
 
@@ -39,6 +41,10 @@ const Scope2Card = ({
     () => rows.reduce((sum, r) => sum + (parseFloat(r.kwh || '0') || 0), 0),
     [rows]
   );
+
+  useEffect(() => {
+    onChange?.({ meters: rows });
+  }, [rows, onChange]);
 
   return (
     <div style={styles.card}>

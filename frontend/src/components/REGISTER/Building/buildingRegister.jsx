@@ -6,6 +6,7 @@ import Sidebar from '../../ALL/Sidebar/sidebar';
 import Building from './buildingForm';
 import Input from '../Input/input';
 import Tier from '../Tier/tier';
+import ManageActivities from '../Input/manage';
 
 const RegisterPage = () => {
   const [activePage, setActivePage] = useState('building');
@@ -16,6 +17,8 @@ const RegisterPage = () => {
         return <Building />;
       case 'input':
         return <Input />;
+      case 'fuel':
+        return <ManageActivities />;
       case 'tier':
         return <Tier />;
       default:

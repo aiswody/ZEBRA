@@ -12,6 +12,8 @@ from .models import (
 from buildings.models import Building
 
 
+# ---------- 입력용 Payload ----------
+
 class Scope1FuelPayloadSerializer(serializers.Serializer):
     tier = serializers.ChoiceField(choices=Tier.choices)
     unit = serializers.CharField()
@@ -151,3 +153,34 @@ class ActivitiesSubmitSerializer(serializers.Serializer):
             AreaInfo.objects.filter(building=building, year=year).delete()
 
         return {"buildingId": building.id, "year": year, "saved": True}
+
+
+# ---------- 조회용(상세/요약) ----------
+
+class Scope1CategoryOutSerializer(serializers.Serializer):
+    tier = serializers.IntegerField()
+    unit = serializers.CharField()
+    amounts = serializers.ListField(child=serializers.DecimalField(max_digits=18, decimal_places=6))
+    emission_factor = serializers.DecimalField(max_digits=18, decimal_places=6, required=False, allow_null=True)
+    calorific_value = serializers.DecimalField(max_digits=18, decimal_places=6, required=False, allow_null=True)
+
+
+class ActivitiesDetailOutSerializer(serializers.Serializer):
+    buildingId = serializers.IntegerField()
+    buildingName = serializers.CharField()
+    year = serializers.IntegerField()
+    scope1 = serializers.DictField(child=Scope1CategoryOutSerializer(), required=False)
+    scope2 = serializers.DictField(required=False)
+    areas = AreaPayloadSerializer(required=False)
+
+
+class ActivitiesSummaryItemSerializer(serializers.Serializer):
+    buildingId = serializers.IntegerField()
+    buildingName = serializers.CharField()
+    year = serializers.IntegerField()
+    solid_amount = serializers.DecimalField(max_digits=20, decimal_places=6, required=False)
+    liquid_amount = serializers.DecimalField(max_digits=20, decimal_places=6, required=False)
+    gas_amount = serializers.DecimalField(max_digits=20, decimal_places=6, required=False)
+    total_kwh = serializers.DecimalField(max_digits=20, decimal_places=6, required=False)
+    gross_area = serializers.DecimalField(max_digits=18, decimal_places=2, required=False)
+    conditioned_area = serializers.DecimalField(max_digits=18, decimal_places=2, required=False)

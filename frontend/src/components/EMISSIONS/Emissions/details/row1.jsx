@@ -13,9 +13,9 @@ export default function TotalEmission({
 
   return (
     <div style={row}>
-      {/* 현재 평균 탄소 배출량 */}
+      {/* 현재 총 탄소 배출량 */}
       <div style={card}>
-        <p style={label}>현재 평균 탄소 배출량</p>
+        <p style={label}>현재 총 탄소 배출량</p>
         <h2 style={value}>
           {Number.isFinite(totalEmission) ? totalEmission.toLocaleString() : 0}
         </h2>
