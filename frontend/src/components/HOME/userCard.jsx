@@ -28,7 +28,7 @@ export default function UserWelcomeCard() {
     <div style={styles.card}>
       {/* 상단 */}
       <div style={styles.headerRow}>
-        <div style={styles.avatar} aria-hidden />
+      <img src={Ariana} alt="avatar" style={styles.avatar} />
         <div style={{ textAlign: 'left' }}>
           <div style={styles.title}>{user?.managerName} 님, 안녕하세요!</div>
           <div style={styles.role}>{user?.role || '관리자'}</div>

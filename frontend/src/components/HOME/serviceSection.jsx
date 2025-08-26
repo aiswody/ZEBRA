@@ -2,9 +2,11 @@ import React from 'react';
 import NoticeSection from './noticeSection';
 import main2Img from '../../assets/main2.png';
 import main3Img from '../../assets/main3.png';
-
+import { useNavigate } from 'react-router-dom';
 
 const ServiceSection = () => {
+  const navigate = useNavigate(); 
+
   return (
     <div style={styles.container}>
       <h3 style={styles.title}>이런 서비스는 어떠세요?</h3>
@@ -18,7 +20,8 @@ const ServiceSection = () => {
             <p style={styles.description}>“우리 기관의 배출 특성, 어디에 가까울까?”</p>
             <p style={styles.description}>“감축 전략 수립의 첫걸음, 특성 진단부터!”</p>
             <div style={styles.cardFooter2}>
-            <button style={styles.button}>배출 유형 진단하기</button>
+            <button style={styles.button}
+               onClick={() => navigate('/register?sub=tier')} >배출 유형 진단하기</button>
             <img src={main2Img} alt="CO2" style={styles.cardImage2} />
             </div>
           </div>
@@ -28,7 +31,8 @@ const ServiceSection = () => {
             <p style={styles.description}>“우리 건물, 얼마나 줄일 수 있을까요?”</p>
             <p style={styles.description}>“활동자료 기반으로 배출량 예측부터 감축 제안까지”</p>
             <div style={styles.cardFooter3}>
-            <button style={styles.button}>대시보드 바로가기</button>
+            <button style={styles.button}
+              onClick={() => navigate('/emissions')} >대시보드 바로가기</button>
             <img src={main3Img} alt="leaf" style={styles.cardImage3} />
             </div>
           </div>

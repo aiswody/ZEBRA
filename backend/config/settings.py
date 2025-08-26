@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'buildings',
     'activities',
     'chatbot',
+    'emissions',
 ]
 
 MIDDLEWARE = [

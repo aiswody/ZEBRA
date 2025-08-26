@@ -74,7 +74,7 @@ export default function TierSurveyPage() {
     []
   );
 
-  const TOTAL_QUESTIONS = 9; // for progress bar max
+  const TOTAL_QUESTIONS = 6; // for progress bar max
 
   // Current node id (question id) or null when finished
   const [currentId, setCurrentId] = useState("Q1");

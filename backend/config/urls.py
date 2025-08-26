@@ -16,5 +16,6 @@ urlpatterns = [
     path("api/activities/", include("activities.urls")), 
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-ui'),
     path("api/chatbot/", include("chatbot.urls")),
+    path('api/', include('emissions.urls')), 
 ]
 
