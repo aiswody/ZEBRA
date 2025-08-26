@@ -1,4 +1,3 @@
-// components/EMISSIONS/Emissions/graph/scope1/graph1.jsx
 import React, { useMemo } from "react";
 import {
   ResponsiveContainer,
@@ -14,7 +13,6 @@ import {
 const TITLE_STYLE = { fontSize: 14, color: "#4B5563", margin: 0, marginBottom: 8 };
 
 export default function Graph1({ items }) {
-  // 예시 데이터 (없을 때)
   const data = useMemo(
     () =>
       (items?.length
@@ -38,21 +36,10 @@ export default function Graph1({ items }) {
       <p style={TITLE_STYLE}>건물별 탄소 배출</p>
       <div style={{ height: 360 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={data}
-            layout="vertical"
-            margin={{ top: 8, right: 16, bottom: 8,}}
-            barCategoryGap={18}
-          >
+          <BarChart data={data} layout="vertical" margin={{ top: 8, right: 16, bottom: 8 }} barCategoryGap={18}>
             <CartesianGrid stroke="#E5E7EB" />
             <XAxis type="number" domain={[0, xMax]} tick={{ fill: "#6B7280" }} />
-            <YAxis
-              type="category"
-              dataKey="name"
-              width={80}
-              tick={{ fill: "#374151", fontWeight: 600 }}
-              tickLine={false}
-            />
+            <YAxis type="category" dataKey="name" width={80} tick={{ fill: "#374151", fontWeight: 600 }} tickLine={false} />
             <Tooltip />
             <Legend verticalAlign="top" align="center" wrapperStyle={{ paddingBottom: 8 }} />
             <Bar dataKey="gas"  stackId="a" fill="#16a34a" radius={[6, 6, 6, 6]} name="가스" />
@@ -65,9 +52,4 @@ export default function Graph1({ items }) {
   );
 }
 
-const card = {
-  background: "#fff",
-  borderRadius: 16,
-  boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
-  padding: 16,
-};
+const card = { background: "#fff", borderRadius: 16, boxShadow: "0 2px 6px rgba(0,0,0,0.06)", padding: 16 };

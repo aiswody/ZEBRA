@@ -13,7 +13,6 @@ export default function TotalEmission({
 
   return (
     <div style={row}>
-      {/* 현재 총 탄소 배출량 */}
       <div style={card}>
         <p style={label}>현재 총 탄소 배출량</p>
         <h2 style={value}>
@@ -25,7 +24,6 @@ export default function TotalEmission({
         </p>
       </div>
 
-      {/* 감축 목표 이행률 */}
       <div style={card}>
         <p style={label}>감축 목표 이행률</p>
         <div style={gaugeRow}>
@@ -39,7 +37,6 @@ export default function TotalEmission({
         </div>
       </div>
 
-      {/* 대안 추천 챗봇 */}
       <div style={card}>
         <p style={label}>대안 추천 챗봇 바로가기</p>
         <div style={chatbotRow}>
@@ -61,7 +58,6 @@ export default function TotalEmission({
   );
 }
 
-/* ===== Styles (반응형 그리드) ===== */
 const row = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",

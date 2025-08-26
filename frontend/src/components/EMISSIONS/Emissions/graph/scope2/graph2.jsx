@@ -1,14 +1,5 @@
 import React from "react";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  Cell,
-} from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from "recharts";
 
 const TITLE_STYLE = { fontSize: 14, color: "#4B5563", margin: 0, marginBottom: 8 };
 
@@ -40,9 +31,4 @@ export default function Graph2({ orgTotal = 0, usageAvg = 0 }) {
   );
 }
 
-const card = {
-  background: "#fff",
-  borderRadius: 16,
-  boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
-  padding: 16,
-};
+const card = { background: "#fff", borderRadius: 16, boxShadow: "0 2px 6px rgba(0,0,0,0.06)", padding: 16 };

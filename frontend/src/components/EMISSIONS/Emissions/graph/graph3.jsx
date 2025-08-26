@@ -8,12 +8,6 @@ import {
   Legend,
 } from "recharts";
 
-/**
- * props
- * - scope1: number
- * - scope2: number
- * - title?: string
- */
 export default function Graph3({ scope1 = 0, scope2 = 0, title = "SCOPE 비율" }) {
   const { s1, s2, total } = useMemo(() => {
     const t = Number(scope1) + Number(scope2);
@@ -24,7 +18,7 @@ export default function Graph3({ scope1 = 0, scope2 = 0, title = "SCOPE 비율" 
     { name: "SCOPE1", value: s1 },
     { name: "SCOPE2", value: s2 },
   ];
-  const COLORS = ["#22c55ec5", "#15803cda"]
+  const COLORS = ["#22c55ec5", "#15803cda"];
 
   return (
     <div style={card}>
@@ -50,12 +44,7 @@ export default function Graph3({ scope1 = 0, scope2 = 0, title = "SCOPE 비율" 
                 <Cell key={i} fill={COLORS[i % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip
-              formatter={(val) => [
-                `${val.toLocaleString()} ( ${(val / total * 100).toFixed(0)}% )`,
-                "",
-              ]}
-            />
+            <Tooltip formatter={(val) => [`${val.toLocaleString()} (${((val / total) * 100).toFixed(0)}%)`, ""]} />
             <Legend verticalAlign="bottom" />
           </PieChart>
         </ResponsiveContainer>
@@ -64,12 +53,5 @@ export default function Graph3({ scope1 = 0, scope2 = 0, title = "SCOPE 비율" 
   );
 }
 
-const card = {
-  background: "0F4D2A",
-  opacity: "30",
-  borderRadius: 16,
-  boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
-  padding: 16,
-
-};
+const card = { background: "#fff", borderRadius: 16, boxShadow: "0 2px 6px rgba(0,0,0,0.06)", padding: 16 };
 const titleStyle = { fontSize: 14, color: "#4B5563", margin: 0, marginBottom: 8 };

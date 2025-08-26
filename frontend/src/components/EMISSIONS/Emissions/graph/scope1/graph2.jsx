@@ -1,4 +1,3 @@
-// components/EMISSIONS/Emissions/graph/scope1/graph2.jsx
 import React from "react";
 import {
   ResponsiveContainer,
@@ -41,9 +40,4 @@ export default function Graph2({ orgTotal = 0, usageAvg = 0 }) {
   );
 }
 
-const card = {
-  background: "#fff",
-  borderRadius: 16,
-  boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
-  padding: 16,
-};
+const card = { background: "#fff", borderRadius: 16, boxShadow: "0 2px 6px rgba(0,0,0,0.06)", padding: 16 };

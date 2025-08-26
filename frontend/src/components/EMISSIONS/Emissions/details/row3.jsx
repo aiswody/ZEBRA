@@ -9,22 +9,10 @@ import {
   Tooltip,
 } from "recharts";
 
-/**
- * props
- * - series: Array<{ date: string('YYYY-MM'), value: number }>
- *           예) [{ date: '2024-01', value: 22 }, ...]
- * - unitLabel?: string   (y축 라벨)
- */
-export default function Row3({
-  series,
-  unitLabel = "배출량 [단위]",
-}) {
-  // 예시 데이터 (없을 때만 사용)
+export default function Row3({ series, unitLabel = "배출량 [단위]" }) {
   const fallback = useMemo(
     () =>
-      [
-        22, 40, 55, 63, 66, 54, 68, 56, 90, 95, 84, 58,
-      ].map((v, i) => ({
+      [22, 40, 55, 63, 66, 54, 68, 56, 90, 95, 84, 58].map((v, i) => ({
         date: `2024-${String(i + 1).padStart(2, "0")}`,
         value: v,
       })),
@@ -33,25 +21,23 @@ export default function Row3({
 
   const source = series?.length ? series : fallback;
 
-  const [granularity, setGranularity] = useState("month"); // 'month' | 'year'
-  const [showPeriodic, setShowPeriodic] = useState(true);  // 시기별
-  const [showCumulative, setShowCumulative] = useState(false); // 누적
+  const [granularity, setGranularity] = useState("month");
+  const [showPeriodic, setShowPeriodic] = useState(true);
+  const [showCumulative, setShowCumulative] = useState(false);
 
-  // 월별 데이터 가공
   const monthlyData = useMemo(() => {
     let cum = 0;
     return source.map((d) => {
       cum += Number(d.value) || 0;
       const [, m] = d.date.split("-");
       return {
-        x: `${Number(m)}월`,
+        x: `${Number(m) || 1}월`,
         periodic: Number(d.value) || 0,
         cumulative: cum,
       };
     });
   }, [source]);
 
-  // 연도별 데이터 가공
   const yearlyData = useMemo(() => {
     const byYear = new Map();
     source.forEach((d) => {
@@ -73,7 +59,6 @@ export default function Row3({
 
   const data = granularity === "month" ? monthlyData : yearlyData;
 
-  // y축 최대/최소 약간의 여유
   const yMax = useMemo(
     () =>
       Math.max(
@@ -89,7 +74,6 @@ export default function Row3({
         <p style={title}>연도별 탄소 배출</p>
 
         <div style={row}>
-          {/* 차트 영역 */}
           <div style={chartBox}>
             <div style={{ height: 320 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -120,7 +104,6 @@ export default function Row3({
                   />
                   <Tooltip formatter={(v) => v.toLocaleString()} />
 
-                  {/* 시기별(검정) */}
                   {showPeriodic && (
                     <Line
                       type="monotone"
@@ -133,7 +116,6 @@ export default function Row3({
                     />
                   )}
 
-                  {/* 누적(초록) */}
                   {showCumulative && (
                     <Line
                       type="monotone"
@@ -150,7 +132,6 @@ export default function Row3({
             </div>
           </div>
 
-          {/* 오른쪽 컨트롤 패널 */}
           <div style={controlBox}>
             <div style={controlTitle}>그래프 형태</div>
 
@@ -204,7 +185,6 @@ export default function Row3({
   );
 }
 
-/* ===== styles ===== */
 const wrap = { width: "100%" };
 const card = {
   background: "#fff",
@@ -213,16 +193,13 @@ const card = {
   padding: 16,
 };
 const title = { fontSize: 14, color: "#4B5563", margin: 0, marginBottom: 8 };
-
 const row = {
   display: "grid",
   gridTemplateColumns: "1fr 220px",
   gap: 12,
   alignItems: "start",
 };
-
 const chartBox = { width: "100%" };
-
 const controlBox = {
   background: "#fff",
   border: "1px solid #E5E7EB",
@@ -232,24 +209,9 @@ const controlBox = {
   flexDirection: "column",
   gap: 10,
 };
-
 const controlTitle = { fontSize: 14, fontWeight: 700, color: "#374151", marginBottom: 6 };
-
 const chk = { display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#374151" };
 const radio = { display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#374151" };
 const divider = { height: 1, background: "#E5E7EB", margin: "6px 0" };
-
-const chipDark = {
-  width: 12,
-  height: 12,
-  borderRadius: 2,
-  background: "#14532d",
-  display: "inline-block",
-};
-const chipLight = {
-  width: 12,
-  height: 12,
-  borderRadius: 2,
-  background: "#a7f3d0",
-  display: "inline-block",
-};
+const chipDark = { width: 12, height: 12, borderRadius: 2, background: "#14532d", display: "inline-block" };
+const chipLight = { width: 12, height: 12, borderRadius: 2, background: "#a7f3d0", display: "inline-block" };

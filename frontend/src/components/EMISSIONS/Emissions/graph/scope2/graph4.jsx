@@ -12,7 +12,7 @@ import {
 const TITLE_STYLE = { fontSize: 14, color: "#4B5563", margin: 0, marginBottom: 8 };
 
 export default function Graph4({
-  series, // [{ date:'YYYY-MM', value:number }]
+  series,
   unitLabel = "배출량 [단위]",
 }) {
   const fallback = useMemo(
@@ -34,7 +34,7 @@ export default function Graph4({
     return source.map((d) => {
       cum += Number(d.value) || 0;
       const [, m] = d.date.split("-");
-      return { x: `${Number(m)}월`, periodic: Number(d.value) || 0, cumulative: cum };
+      return { x: `${Number(m) || 1}월`, periodic: Number(d.value) || 0, cumulative: cum };
     });
   }, [source]);
 
@@ -64,7 +64,6 @@ export default function Graph4({
       <p style={TITLE_STYLE}>연도별 탄소 배출</p>
 
       <div style={layout}>
-        {/* 차트 */}
         <div style={{ width: "100%" }}>
           <div style={{ height: 320 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -105,7 +104,6 @@ export default function Graph4({
           </div>
         </div>
 
-        {/* 컨트롤 */}
         <div style={controls}>
           <div style={ctlTitle}>그래프 형태</div>
 

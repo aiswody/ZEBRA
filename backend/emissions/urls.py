@@ -2,7 +2,7 @@ from django.urls import path
 from .views_dashboard import (
     TotalTabView, Scope1TabView, Scope2TabView,
     Scope1BuildingsCompareView, Scope2BuildingsCompareView,
-    ScopeRatioView, YearlyTrendView, 
+    ScopeRatioView, YearlyTrendView,
     TotalUseCompareView, Scope1UseCompareView, Scope2UseCompareView
 )
 

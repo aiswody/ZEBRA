@@ -1,4 +1,3 @@
-// components/EMISSIONS/Emissions/graph/scope1/graph4.jsx
 import React, { useMemo, useState } from "react";
 import {
   ResponsiveContainer,
@@ -13,7 +12,7 @@ import {
 const TITLE_STYLE = { fontSize: 14, color: "#4B5563", margin: 0, marginBottom: 8 };
 
 export default function Graph4({
-  series, // [{ date:'YYYY-MM', value:number }]
+  series,
   unitLabel = "배출량 [단위]",
 }) {
   const fallback = useMemo(
@@ -26,7 +25,7 @@ export default function Graph4({
   );
   const source = series?.length ? series : fallback;
 
-  const [granularity, setGranularity] = useState("month"); // 'month' | 'year'
+  const [granularity, setGranularity] = useState("month");
   const [showPeriodic, setShowPeriodic] = useState(true);
   const [showCumulative, setShowCumulative] = useState(false);
 
@@ -35,7 +34,7 @@ export default function Graph4({
     return source.map((d) => {
       cum += Number(d.value) || 0;
       const [, m] = d.date.split("-");
-      return { x: `${Number(m)}월`, periodic: Number(d.value) || 0, cumulative: cum };
+      return { x: `${Number(m) || 1}월`, periodic: Number(d.value) || 0, cumulative: cum };
     });
   }, [source]);
 
@@ -57,8 +56,7 @@ export default function Graph4({
   const data = granularity === "month" ? monthlyData : yearlyData;
 
   const yMax = useMemo(
-    () =>
-      Math.max(...data.map((d) => Math.max(d.periodic ?? 0, d.cumulative ?? 0)), 0) * 1.1,
+    () => Math.max(...data.map((d) => Math.max(d.periodic ?? 0, d.cumulative ?? 0)), 0) * 1.1,
     [data]
   );
 
@@ -67,7 +65,6 @@ export default function Graph4({
       <p style={TITLE_STYLE}>연도별 탄소 배출</p>
 
       <div style={layout}>
-        {/* 차트 */}
         <div style={{ width: "100%" }}>
           <div style={{ height: 320 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -108,7 +105,6 @@ export default function Graph4({
           </div>
         </div>
 
-        {/* 컨트롤 */}
         <div style={controls}>
           <div style={ctlTitle}>그래프 형태</div>
 

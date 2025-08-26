@@ -1,11 +1,16 @@
 import React from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import zebraLogo from '../../../assets/zebraLogo.png';
 import TopRightBar from '../../HOME/rightBar';
 
 const Navbar = () => {
+  const location = useLocation(); // ← 현재 경로
+  const introRoutes = ['/first', '/second', '/third'];
+  const isIntroActive = introRoutes.some(p => location.pathname.startsWith(p));
+
+
   const links = [
-    { to: '/intro',          label: '서비스 소개' },
+    { to: '/first',    label: '서비스 소개', isIntroGroup: true },
     { to: '/register',  label: '건물 등록 및 관리' },
     { to: '/emissions', label: '배출량 조회' },
     { to: '/notice',    label: '공지사항' },

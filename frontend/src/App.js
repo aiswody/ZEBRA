@@ -9,8 +9,12 @@ import MainPage from './components/HOME/mainPage';
 import SignUpPage from './components/SIGNUP/SignUpPage';
 import RegisterPage from './components/REGISTER/Building/buildingRegister';
 import NoticePage from './components/NOTICE/Notice/notice.jsx';
-import IntroPage from './components/INTRO/Introdution/intro.jsx';
 import EmissionPage from './components/EMISSIONS/emissions.jsx';
+
+// ✅ 추가: 인트로 3단계 페이지
+import First from './components/INTRO/Introdution/first.jsx';
+import Second from './components/INTRO/Introdution/second.jsx';
+import Third from './components/INTRO/Introdution/third.jsx';
 
 // ✅ 추가: 인증 컨텍스트 & 보호 라우트
 import { AuthProvider } from './contexts/authContext';
@@ -26,8 +30,15 @@ function App() {
           {/* 공개 페이지 */}
           <Route path="/" element={<MainPage />} />
           <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/intro" element={<IntroPage />} />
+          <Route path="/first" element={<First />} />
+          <Route path="/second" element={<Second />} />
+          <Route path="/third" element={<Third />} />
           <Route path="/notice" element={<NoticePage />} />
+
+          {/* 인트로 전환 페이지 */}
+          <Route path="/first" element={<First />} />
+          <Route path="/second" element={<Second />} />
+          <Route path="/third" element={<Third />} />
 
           {/* 보호 페이지 (로그인 필요) */}
           <Route

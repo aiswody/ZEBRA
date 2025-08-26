@@ -1,10 +1,9 @@
-// components/EMISSIONS/Emissions/graph/scope1/graph3.jsx
 import React from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
 const TITLE_STYLE = { fontSize: 14, color: "#4B5563", margin: 0, marginBottom: 8 };
 
-export default function Graph3({ scope1 = 48, scope2 = 52 }) {
+export default function Graph3({ scope1 = 48, scope2 = 0 }) {
   const s1 = Number(scope1) || 0;
   const s2 = Number(scope2) || 0;
   const total = s1 + s2 || 1;
@@ -45,9 +44,4 @@ export default function Graph3({ scope1 = 48, scope2 = 52 }) {
   );
 }
 
-const card = {
-  background: "#fff",
-  borderRadius: 16,
-  boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
-  padding: 16,
-};
+const card = { background: "#fff", borderRadius: 16, boxShadow: "0 2px 6px rgba(0,0,0,0.06)", padding: 16 };

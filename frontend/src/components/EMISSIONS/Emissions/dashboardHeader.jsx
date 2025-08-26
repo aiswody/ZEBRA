@@ -12,16 +12,13 @@ export default function DashboardHeader({
   onSave, onShare, onExportPdf,
 }) {
   const { user } = useAuth();
-
-  // 기관명: props > authContext
   const [orgName, setOrgName] = useState(initialOrgName || user?.institutionName || "");
   useEffect(() => {
     if (initialOrgName) setOrgName(initialOrgName);
     else if (user?.institutionName) setOrgName(user.institutionName);
   }, [initialOrgName, user?.institutionName]);
 
-  // 건물 드롭다운
-  const [options, setOptions] = useState([]); // [{id, name}]
+  const [options, setOptions] = useState([]);
   const [selected, setSelected] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -69,7 +66,6 @@ export default function DashboardHeader({
         background: "#fff",
       }}
     >
-      {/* 좌측: 제목 + 기관명 & 드롭다운 */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <img
@@ -102,7 +98,6 @@ export default function DashboardHeader({
         </div>
       </div>
 
-      {/* 우측 버튼들 */}
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <button style={buttonStyle} onClick={onSave}>
           <FiSave style={{ marginRight: 6 }} /> 결과 저장
@@ -124,7 +119,6 @@ const orgText = {
   color: "#14532d",
   lineHeight: 1,
 };
-
 const selectStyle = {
   padding: "10px 14px",
   borderRadius: 10,
@@ -133,7 +127,6 @@ const selectStyle = {
   width: 360,
   background: "#fff",
 };
-
 const buttonStyle = {
   display: "flex",
   alignItems: "center",
