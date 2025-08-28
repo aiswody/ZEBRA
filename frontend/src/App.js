@@ -10,6 +10,7 @@ import SignUpPage from './components/SIGNUP/SignUpPage';
 import RegisterPage from './components/REGISTER/Building/buildingRegister';
 import NoticePage from './components/NOTICE/Notice/notice.jsx';
 import EmissionPage from './components/EMISSIONS/emissions.jsx';
+import Chatbot from './components/ALL/Chatbot/chatbot.jsx';
 
 // ✅ 추가: 인트로 3단계 페이지
 import First from './components/INTRO/Introdution/first.jsx';
@@ -34,6 +35,10 @@ function App() {
           <Route path="/second" element={<Second />} />
           <Route path="/third" element={<Third />} />
           <Route path="/notice" element={<NoticePage />} />
+          
+          {/* --- [수정됨] --- */}
+          {/* 챗봇 페이지를 아래 보호 페이지 섹션으로 이동시켰습니다. */}
+
 
           {/* 인트로 전환 페이지 */}
           <Route path="/first" element={<First />} />
@@ -54,6 +59,17 @@ function App() {
             element={
               <PrivateRoute>
                 <EmissionPage />
+              </PrivateRoute>
+            }
+          />
+          
+          {/* --- [추가됨] --- */}
+          {/* 챗봇 페이지도 로그인한 사용자만 접근할 수 있도록 PrivateRoute로 감싸줍니다. */}
+          <Route
+            path="/chatbot"
+            element={
+              <PrivateRoute>
+                <Chatbot />
               </PrivateRoute>
             }
           />

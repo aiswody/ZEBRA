@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FaRegFilePdf } from "react-icons/fa";
-import { FiShare2, FiSave } from "react-icons/fi";
-import { header, title } from "./emission.styles";
+import { FiShare2, FiSave, FiChevronDown } from "react-icons/fi";
 import appLogo from "../../../assets/logo.png";
 import { api } from "../../../api/client";
 import { useAuth } from "../../../contexts/authContext";
@@ -12,6 +11,7 @@ export default function DashboardHeader({
   onSave, onShare, onExportPdf,
 }) {
   const { user } = useAuth();
+
   const [orgName, setOrgName] = useState(initialOrgName || user?.institutionName || "");
   useEffect(() => {
     if (initialOrgName) setOrgName(initialOrgName);
@@ -21,31 +21,37 @@ export default function DashboardHeader({
   const [options, setOptions] = useState([]);
   const [selected, setSelected] = useState("");
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
 
+  // 건물 목록 로드
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         setLoading(true);
-        const { data } = await api.get("/buildings/"); // baseURL=/api
+        setErrorMsg("");
+        const { data } = await api.get("/buildings/");
         const rows = Array.isArray(data) ? data : (data?.results || []);
-        const opts = rows.map(({ id, name }) => ({ id: String(id), name }));
+        const opts = rows.map(({ id, name }) => ({ id: String(id), name: String(name || "이름 없음") }));
         if (!mounted) return;
         setOptions(opts);
-        if (opts.length) {
+
+        if (!selected && opts.length) {
           setSelected(opts[0].id);
           onSelectBuilding?.(opts[0].id);
         }
       } catch (e) {
         console.error("건물 목록 로드 실패", e);
-        setOptions([]);
-        setSelected("");
+        if (mounted) {
+          setOptions([]);
+          setSelected("");
+          setErrorMsg("건물 목록을 불러오지 못했어요. 새로고침하거나 관리자에게 문의해 주세요.");
+        }
       } finally {
         mounted && setLoading(false);
       }
     })();
     return () => { mounted = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleChange = (e) => {
@@ -55,78 +61,131 @@ export default function DashboardHeader({
   };
 
   return (
-    <header
-      style={{
-        ...header,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        padding: "12px 20px",
-        borderBottom: "1px solid #E5E7EB",
-        background: "#fff",
-      }}
-    >
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img
-            src={appLogo}
-            alt=""
-            style={{ width: 28, height: 28, objectFit: "contain", display: "block" }}
-            onError={(e) => { e.currentTarget.style.display = "none"; }}
-          />
-          <h1 style={{ ...title, fontSize: 18, margin: 0 }}>
-            공공건축물 탄소 절감을 위한 대시보드
-          </h1>
+    <div style={cardStyle}>
+      <header style={headerStyle}>
+        {/* 좌측: 로고/제목 + 기관/건물 선택 */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 280, flex: "1 1 440px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, minHeight: 28 }}>
+            <img
+              src={appLogo}
+              alt=""
+              style={{ width: 28, height: 28, objectFit: "contain", display: "block" }}
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+            />
+            <h1 style={{ fontSize: 22, fontWeight: 700, fontWeight: 'bold', margin: 0, color: "#111827" }}> 
+  공공건축물 탄소 절감을 위한 대시보드
+</h1>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <span style={orgText}>{orgName || "기관명 불러오는 중…"}</span>
+
+            <label htmlFor="buildingSelect" style={{ position: "absolute", left: -10000, width: 1, height: 1, overflow: "hidden" }}>
+              그래프를 보고 싶은 건물 선택
+            </label>
+
+            {/* ▼ 셀렉트 + 화살표 아이콘 */}
+            <div style={selectWrap}>
+              <select
+                id="buildingSelect"
+                aria-label="그래프를 보고 싶은 건물 선택"
+                value={selected}
+                onChange={handleChange}
+                style={selectStyle}
+                disabled={loading || !!errorMsg}
+              >
+                <option value="">
+                  {loading ? "건물 목록 불러오는 중…" : (options.length ? "건물 선택" : "건물이 없습니다")}
+                </option>
+                {options.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+              <FiChevronDown aria-hidden="true" style={chevStyle} />
+            </div>
+          </div>
+
+          {errorMsg && (
+            <p style={{ margin: 0, marginTop: 4, fontSize: 13, color: "#b91c1c" }}>
+              {errorMsg}
+            </p>
+          )}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={orgText}>{orgName || "기관명 불러오는 중…"}</span>
-
-          <select
-            aria-label="그래프를 보고 싶은 건물 선택"
-            value={selected}
-            onChange={handleChange}
-            style={selectStyle}
-          >
-            <option value="">
-              {loading ? "건물 목록 불러오는 중…" : "그래프를 보고 싶은 건물 선택"}
-            </option>
-            {options.map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
+        {/* 우측: 액션 버튼들 */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <button style={buttonStyle} onClick={onSave} aria-label="결과 저장">
+            <FiSave style={{ marginRight: 6 }} />
+            <span>결과 저장</span>
+          </button>
+          <button style={buttonStyle} onClick={onShare} aria-label="공유하기">
+            <FiShare2 style={{ marginRight: 6 }} />
+            <span>공유하기</span>
+          </button>
+          <button style={{ ...buttonStyle, backgroundColor: "#f8fafc" }} onClick={onExportPdf} aria-label="PDF로 내보내기">
+            <FaRegFilePdf style={{ marginRight: 6 }} />
+            <span>PDF 출력</span>
+          </button>
         </div>
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <button style={buttonStyle} onClick={onSave}>
-          <FiSave style={{ marginRight: 6 }} /> 결과 저장
-        </button>
-        <button style={buttonStyle} onClick={onShare}>
-          <FiShare2 style={{ marginRight: 6 }} /> 공유하기
-        </button>
-        <button style={buttonStyle} onClick={onExportPdf}>
-          <FaRegFilePdf style={{ marginRight: 6 }} /> PDF 출력
-        </button>
-      </div>
-    </header>
+      </header>
+    </div>
   );
 }
 
-const orgText = {
-  fontSize: 18,
-  fontWeight: 700,
-  color: "#14532d",
-  lineHeight: 1,
+/* ───────── 스타일 ───────── */
+const cardStyle = {
+  background: "#fff",
+  padding: "45px 25px",              // ← 내부 여백 (위/좌/우/아래 모두 24px)
+  borderRadius: "8px",
+  boxShadow: "0 2px 8px rgba(0,0,0,.1)",
+  marginTop: "0px",            // ← 화면 상단에서 카드 시작 위치
+  marginBottom: "20px"
 };
+
+const headerStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: 16,
+  flexWrap: "wrap"
+};
+
+const orgText = {
+  fontSize: 16,
+  fontWeight: 600,
+  color: "#14532d",
+  lineHeight: 1.4,
+};
+
+const selectWrap = {
+  position: "relative",
+  width: "clamp(180px, 24vw, 320px)",
+  flex: "0 0 auto",
+};
+
 const selectStyle = {
   padding: "10px 14px",
+  paddingRight: "40px",
   borderRadius: 10,
   border: "1px solid #D1D5DB",
   fontSize: 16,
-  width: 360,
+  width: "100%",
   background: "#fff",
+  outline: "none",
+  appearance: "none",
+  cursor: "pointer",
 };
+
+const chevStyle = {
+  position: "absolute",
+  right: 12,
+  top: "50%",
+  transform: "translateY(-50%)",
+  pointerEvents: "none",
+  fontSize: 18,
+  color: "#94A3B8",
+};
+
 const buttonStyle = {
   display: "flex",
   alignItems: "center",
@@ -137,4 +196,6 @@ const buttonStyle = {
   borderRadius: 10,
   backgroundColor: "#fff",
   cursor: "pointer",
+  lineHeight: 1.25,
+  transition: "box-shadow .15s ease, transform .02s ease",
 };

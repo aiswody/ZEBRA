@@ -3,8 +3,8 @@ import React from "react";
 import { Search, LayoutDashboard, Download } from "lucide-react";
 import ProfileCard from "../Profile/profile";
 
-const HEADER_H = 120;
-const TOP_SAFE = 16;
+const HEADER_H = 64;
+const TOP_SAFE  = 62;   // 너가 맞춘 값 유지
 
 export default function Esidebar({
   activePage = "dashboard",
@@ -12,19 +12,26 @@ export default function Esidebar({
 }) {
   return (
     <aside style={sx.sidebar}>
+      {/* 상단 여유 */}
+      <div style={{ height: TOP_SAFE }} />
+
       {/* 검색 */}
       <div style={sx.searchBox}>
         <Search size={16} style={sx.searchIcon} />
         <input type="search" placeholder="검색" style={sx.searchInput} />
       </div>
 
-      {/* 프로필: 좌측정렬 & 전체폭 */}
-      <div style={{ width: "100%" }}>
-        <ProfileCard containerStyle={{ width: "100%", textAlign: "left" }} />
+      {/* ProfileCard - Sidebar.jsx와 동일 프롭 사용 + marginBottom 제거 */}
+      <div style={sx.profileWrap}>
+        <ProfileCard
+          variant="sidebar"
+          showActions={false}
+          containerStyle={{ width: "100%", textAlign: "left", marginBottom: 0 }}
+        />
       </div>
 
-      {/* Menu */}
-      <div style={sx.section}>
+      {/* Menu - 프로필 아래 간격을 우리가 정확히 통제 */}
+      <div style={sx.menuBlock}>
         <div style={sx.sectionTitle}>Menu</div>
 
         <button
@@ -36,9 +43,7 @@ export default function Esidebar({
           }}
         >
           {activePage === "dashboard" && <span style={sx.activeBar} />}
-          <span style={sx.menuIcon}>
-            <LayoutDashboard size={16} />
-          </span>
+          <span style={sx.menuIcon}><LayoutDashboard size={16} /></span>
           <span>탄소 감축 대시보드</span>
         </button>
 
@@ -51,9 +56,7 @@ export default function Esidebar({
           }}
         >
           {activePage === "reports" && <span style={sx.activeBar} />}
-          <span style={sx.menuIcon}>
-            <Download size={16} />
-          </span>
+          <span style={sx.menuIcon}><Download size={16} /></span>
           <span>전체 리포트 다운로드</span>
         </button>
       </div>
@@ -64,7 +67,7 @@ export default function Esidebar({
 const sx = {
   sidebar: {
     position: "sticky",
-    top: HEADER_H + TOP_SAFE,
+    top: HEADER_H,
     alignSelf: "start",
     width: 260,
     minHeight: `calc(100vh - ${HEADER_H}px)`,
@@ -75,11 +78,10 @@ const sx = {
     overflowX: "hidden",
     boxSizing: "border-box",
 
-    // ✅ 정렬 안정화
+    // ✅ 부모 gap 제거: 간격은 각 요소 margin으로만 통제
     display: "flex",
     flexDirection: "column",
-    gap: 16,
-    alignItems: "stretch",
+    gap: 0,
     textAlign: "left",
   },
 
@@ -107,28 +109,52 @@ const sx = {
     WebkitAppearance: "none",
   },
 
-  // 섹션
-  section: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 },
-  sectionTitle: { fontWeight: 800, fontSize: 14, color: "#111827", marginBottom: 6 },
-  divider: { height: 1, background: "#E5E9E7", margin: "10px 0 14px" },
+  // ✅ 프로필 아래 간격은 명시적으로 지정 (Sidebar.jsx 대비 정확히 동일)
+  profileWrap: {
+    width: "100%",
+    marginBottom: 16,    // ← 여기 값이 '검색창 ↔ Menu' 거리의 핵심
+  },
+
+  // ✅ Menu 블록의 상단 여백은 0 (프로필에서만 간격 관리)
+  menuBlock: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,             // 메뉴 항목 사이 간격 (Sidebar.jsx의 ITEM_GAP=12와 동일)
+    marginTop: 0,
+  },
+  sectionTitle: {
+    fontWeight: 800,
+    fontSize: 14,
+    color: "#111827",
+    margin: 0,
+    marginTop: 3,
+    marginBottom: 6,
+  },
 
   // 메뉴
   menuItem: {
-    position: "relative",
-    display: "flex",
-    alignItems: "center",   // ✅ 아이콘/텍스트 수직 정렬
-    gap: 10,
-    height: 44,
-    padding: "0 12px",
-    borderRadius: 10,
-    textAlign: "left",
-    background: "transparent",
-    border: "1px solid transparent",
-    color: "#2A2F2C",
-    fontSize: 14,
-    lineHeight: "normal",   // ✅ 고정 line-height 제거
-    cursor: "pointer",
-  },
+  position: "relative",
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  height: 44,
+  padding: "0 12px",
+  borderRadius: 10,
+  textAlign: "left",
+
+  // 기본 버튼 스타일 리셋 🔧
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
+  backgroundColor: "transparent",
+  border: "1px solid transparent",
+  outline: "none",
+
+  color: "#2A2F2C",
+  fontSize: 14,
+  lineHeight: "normal",
+  cursor: "pointer",
+},
   menuItemActive: {
     backgroundColor: "#E6F4EA",
     border: "1px solid #CFE4D8",
@@ -145,7 +171,7 @@ const sx = {
     background: "#1F7A43",
   },
   menuIcon: {
-    width: 18,              // ✅ 고정폭으로 텍스트 시작선 통일
+    width: 18,
     textAlign: "center",
     display: "flex",
     alignItems: "center",

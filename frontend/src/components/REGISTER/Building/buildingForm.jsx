@@ -4,11 +4,10 @@ import { useAuth } from '../../../contexts/authContext';
 import { api } from '../../../api/client';
 
 /** ─────────── 설정 ─────────── */
-const BUILDINGS_API = '/buildings/';               // client.js baseURL이 /api 이므로 상대경로만 사용
+const BUILDINGS_API = '/buildings/';
 const KAKAO_KEY = '6bfadcc55e6a410027178ce3208a469e';
-const MOCK_KEY = 'mockBuildings';                  // 서버 미동작 시 로컬 저장 키
+const MOCK_KEY = 'mockBuildings';
 
-/** Kakao SDK 로더 */
 function loadKakaoSDK(appKey) {
   return new Promise((resolve, reject) => {
     if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
@@ -32,7 +31,6 @@ function loadKakaoSDK(appKey) {
   });
 }
 
-/** 서버/로컬 공통 유틸 (axios api 사용) */
 async function safeGetList() {
   try {
     const { data } = await api.get(BUILDINGS_API);
@@ -59,7 +57,6 @@ async function safeAdd(payload) {
     const { data } = await api.post(BUILDINGS_API, payload);
     return data;
   } catch (e) {
-    // 로컬 fallback (개발용)
     const item = {
       id: Date.now(),
       name: payload.name,
@@ -74,16 +71,13 @@ async function safeAdd(payload) {
   }
 }
 
-async function safeDelete(id) {
-  try {
-    await api.delete(`${BUILDINGS_API}${id}/`);
-  } catch (e) {
-    const list = await safeGetList();
-    localStorage.setItem(MOCK_KEY, JSON.stringify(list.filter(b => String(b.id) !== String(id))));
+async function deleteOnServer(id) {
+  const res = await api.delete(`${BUILDINGS_API}${id}/`);
+  if (![204, 200].includes(res.status)) {
+    throw new Error(`DELETE failed: ${res.status}`);
   }
 }
 
-/** 한글 라벨 → 백엔드 enum 코드 매핑 */
 const usageMap = {
   '업무 시설': 'OFFICE',
   '교육 연구 시설': 'EDU_RESEARCH',
@@ -95,32 +89,21 @@ const usageMap = {
 
 const Building = () => {
   const { user } = useAuth();
-
-  // 기관명
   const [insName, setInsName] = useState('');
-
-  // 좌측 입력: 키워드 검색 + 최종 건물명
   const [keyword, setKeyword] = useState('');
   const [suggests, setSuggests] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [buildingName, setBuildingName] = useState(''); // 실제 추가될 이름
-
-  // 제안에서 고른 상세(주소, 좌표, 고유ID)
+  const [buildingName, setBuildingName] = useState('');
   const [picked, setPicked] = useState(null);
-  // { id: place_id, title, address, x(lng), y(lat) }
-
-  // 우측 목록
   const [list, setList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
-  // 지도
   const mapRef = useRef(null);
   const mapObjRef = useRef(null);
   const markerRef = useRef(null);
-  const placesRef = useRef(null); // kakao.maps.services.Places
+  const placesRef = useRef(null);
 
-  // 초기 기관명
   useEffect(() => {
     if (user?.institutionName) {
       setInsName(user.institutionName);
@@ -132,13 +115,12 @@ const Building = () => {
     } catch {}
   }, [user]);
 
-  // Kakao 준비 + 지도 초기화 + Places 준비
   useEffect(() => {
     let mounted = true;
     (async () => {
       const kakao = await loadKakaoSDK(KAKAO_KEY);
       if (!mounted) return;
-      const center = new kakao.maps.LatLng(37.5665, 126.9780); // 서울시청
+      const center = new kakao.maps.LatLng(37.5665, 126.9780);
       const map = new kakao.maps.Map(mapRef.current, { center, level: 4 });
       mapObjRef.current = map;
       markerRef.current = new kakao.maps.Marker({ map, position: center });
@@ -147,7 +129,6 @@ const Building = () => {
     return () => { mounted = false; };
   }, []);
 
-  // 목록 최초 로드
   useEffect(() => {
     (async () => {
       try {
@@ -155,7 +136,6 @@ const Building = () => {
         setLoadError('');
         const data = await safeGetList();
         setList(data);
-        // 빈 목록은 정상 케이스이므로 에러 메시지 표시 안 함
       } catch {
         setLoadError('건물 목록을 가져오지 못했습니다.');
       } finally {
@@ -164,7 +144,6 @@ const Building = () => {
     })();
   }, []);
 
-  // 키워드 검색 (카카오 Places)
   useEffect(() => {
     if (!placesRef.current) return;
     if (!keyword.trim()) {
@@ -180,11 +159,11 @@ const Building = () => {
           return;
         }
         const mapped = data.map(p => ({
-          id: p.id,                        // place_id 로 사용
+          id: p.id,
           title: p.place_name,
           address: p.road_address_name || p.address_name || '',
-          x: p.x, // lng
-          y: p.y, // lat
+          x: p.x,
+          y: p.y,
         }));
         setSuggests(mapped.slice(0, 8));
       });
@@ -192,7 +171,6 @@ const Building = () => {
     return () => clearTimeout(t);
   }, [keyword]);
 
-  // 제안 클릭 → 건물명 세팅 + 지도 이동 + picked 저장
   const pickSuggest = (s) => {
     setBuildingName(s.title);
     setKeyword('');
@@ -205,26 +183,19 @@ const Building = () => {
     }
   };
 
-  // 건물 용도 (옵션)
   const buildingTypes = [
     '업무 시설','교육 연구 시설','문화 및 집회시설','의료 시설','수련 시설','운수 시설',
   ];
   const [selectedPurpose, setSelectedPurpose] = useState('');
 
-  // 추가하기 → POST(또는 로컬) → 우측 목록 갱신
   const handleAdd = async () => {
     const name = buildingName.trim();
     if (!name) return alert('건물명을 입력하세요.');
-
-    // 프론트 레벨 중복 방지
     if (list.some(b => b.name === name)) {
       return alert('이미 등록된 건물입니다.');
     }
-
-    // 백엔드에 맞는 payload 구성
     const payload = {
       name,
-      // serializers.BuildingCreateSerializer: use_type → usage(source) 매핑
       ...(selectedPurpose && { use_type: usageMap[selectedPurpose] || 'OTHER' }),
       ...(picked?.address && { address: picked.address }),
       ...(picked?.y && { lat: Number(picked.y) }),
@@ -232,7 +203,6 @@ const Building = () => {
       ...(picked?.id && { place_id: String(picked.id) }),
       provider: 'KAKAO',
     };
-
     try {
       const created = await safeAdd(payload);
       setList(prev => [...prev, created]);
@@ -245,10 +215,16 @@ const Building = () => {
     }
   };
 
-  // 우측 목록에서 삭제
   const handleDelete = async (id) => {
-    await safeDelete(id);
-    setList(prev => prev.filter(b => String(b.id) !== String(id)));
+    if (!window.confirm("정말 삭제할까요?")) return;
+    try {
+      await deleteOnServer(id);
+      const data = await safeGetList();
+      setList(data);
+    } catch (e) {
+      console.error(e);
+      alert("삭제에 실패했습니다.");
+    }
   };
 
   return (
@@ -264,73 +240,91 @@ const Building = () => {
             type="text"
             value={insName || ''}
             readOnly
-            style={{ border: "none", outline: "none", background: "transparent",
+            style={{
+              border: "none", outline: "none", background: "transparent",
               color:'#374151', fontSize: 16, fontWeight: 600,
-              whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', }}
+              whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
+            }}
           />
+        {/* ── 구분선 ── */}
+          <div style={{ ...styles.divider, marginTop: '30px' }} aria-hidden="true" />
+
         </div>
 
-        {/* 키워드 검색 + 제안 */}
-        <div style={{ ...styles.section, position:'relative' }}>
-          <label>지도 위치 검색</label>
-          <input
-            type="text"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder="예: 한양대학교 신공학관, 동국대학교 원흥관…"
-            style={styles.input}
-          />
-          {isSearching && <div style={styles.hint}>검색 중…</div>}
-          {suggests.length > 0 && (
-            <div style={styles.dropdown}>
-              {suggests.map(s => (
-                <button key={s.id} style={styles.dropdownItem} onClick={() => pickSuggest(s)}>
-                  <div style={{ fontWeight:600 }}>{s.title}</div>
-                  {s.address && <div style={styles.addr}>{s.address}</div>}
+
+        {/* ↓↓↓ 등록명 이후 전체 묶음을 아래로 내림 ↓↓↓ */}
+        <div style={{ marginTop: '35px' }}>
+          
+
+          {/* 키워드 검색 + 제안 */}
+          <div style={{ ...styles.section, position:'relative' }}>
+            <label>지도 위치 검색</label>
+            <input
+              type="text"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder="예 : 한양대학교 신공학관, 동국대학교 원흥관…"
+              style={styles.input}
+            />
+            {isSearching && <div style={styles.hint}>검색 중…</div>}
+            {suggests.length > 0 && (
+              <div style={styles.dropdown}>
+                {suggests.map(s => (
+                  <button key={s.id} style={styles.dropdownItem} onClick={() => pickSuggest(s)}>
+                    <div style={{ fontWeight:600 }}>{s.title}</div>
+                    {s.address && <div style={styles.addr}>{s.address}</div>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 실제 등록될 건물명 */}
+          <div style={styles.section}>
+            <label>건물명</label>
+            <input
+              type="text"
+              value={buildingName}
+              onChange={(e) => setBuildingName(e.target.value)}
+              placeholder="예 : 동국대학교 원흥관"
+              style={styles.input}
+            />
+          </div>
+
+          {/* 건물 용도 */}
+          <div style={styles.section}>
+            <label>건물 용도</label>
+            <div style={styles.tags}>
+              {buildingTypes.map((item) => (
+                <button
+                  key={item}
+                  style={{ ...styles.tag, ...(selectedPurpose===item ? styles.selectedTag : {}) }}
+                  onClick={() => setSelectedPurpose(item)}
+                  type="button"
+                >
+                  {item}
                 </button>
               ))}
             </div>
-          )}
-        </div>
-
-        {/* 실제 등록될 건물명 */}
-        <div style={styles.section}>
-          <label>건물명</label>
-          <input
-            type="text"
-            value={buildingName}
-            onChange={(e) => setBuildingName(e.target.value)}
-            placeholder="예: 동국대학교 원흥관"
-            style={styles.input}
-          />
-        </div>
-
-        {/* 건물 용도 (옵션) */}
-        <div style={styles.section}>
-          <label>건물 용도</label>
-          <div style={styles.tags}>
-            {buildingTypes.map((item) => (
-              <button
-                key={item}
-                style={{ ...styles.tag, ...(selectedPurpose===item ? styles.selectedTag : {}) }}
-                onClick={() => setSelectedPurpose(item)}
-                type="button"
-              >
-                {item}
-              </button>
-            ))}
+            <button style={styles.registerButton} onClick={handleAdd} type="button">추가하기</button>
           </div>
-          <button style={styles.registerButton} onClick={handleAdd} type="button">추가하기</button>
         </div>
+        {/* ↑↑↑ 여기까지 한 묶음 ↓↓↓ */}
       </div>
 
-      {/* 우측: 저장된 건물 목록 (삭제 가능) */}
+      {/* 우측: 건물 목록 */}
       <aside style={styles.rightPanel} aria-label="건물 목록">
         <div style={styles.panelHeader}>
           <div style={{ fontWeight: 'bold', fontSize: '22px', marginBottom: '10px' }}>
             건물 목록
           </div>
-          <small style={{ color: '#6b7280', display: 'block',  marginBottom: '20px'}}>
+          <small style={{
+            color: '#6b7280',
+            display: 'block',
+            marginBottom: '25px',
+            fontSize: '16px',
+            fontWeight: 600
+          }}>
             {insName ? `기관 : ${insName}` : '기관명을 확인하세요'}
           </small>
         </div>
@@ -366,7 +360,7 @@ const Building = () => {
         </div>
       </aside>
 
-      {/* 하단: 지도 */}
+      {/* 하단 지도 */}
       <div style={{ gridColumn:'1 / -1' }}>
         <h3 style={{ margin:'16px 0 8px' }}>지도</h3>
         <div
@@ -381,11 +375,12 @@ const Building = () => {
 
 /** ─────────── styles ─────────── */
 const styles = {
-  pageGrid: { display:'grid', gridTemplateColumns:'2fr 1.2fr', gap:'16px', alignItems:'start' },
+  pageGrid: { display:'grid', gridTemplateColumns:'2fr 1.2fr', gap:'16px', alignItems:'start', marginTop:'32px' },
   container: { background:'#fff', padding:'24px', borderRadius:'8px', boxShadow:'0 2px 8px rgba(0,0,0,.1)' },
   title: { marginBottom:'24px', fontSize:'22px', fontWeight:'bold' },
   section: { marginBottom:'20px' },
-  input: { padding:'8px 12px', fontSize:'14px', width:'100%', borderRadius:'4px', border:'1px solid #ccc', marginTop:'8px' },
+  input: { padding:'8px 12px', fontSize:'14px', width:'100%', maxWidth:'95%', borderRadius:'4px', border:'1px solid #ccc', marginTop:'8px' },
+  divider: { height:1, background:'#e5e7eb', margin:'20px 0' },
   hint: { position:'absolute', right:12, top:40, fontSize:12, color:'#6b7280' },
   dropdown: {
     position:'absolute', top:68, left:0, right:0, background:'#fff', border:'1px solid #e5e7eb',
@@ -404,8 +399,14 @@ const styles = {
     borderRadius:'4px', fontWeight:'bold', cursor:'pointer'
   },
 
-  rightPanel: { background:'#fff', padding:'16px', borderRadius:'8px', boxShadow:'0 2px 8px rgba(0,0,0,.1)', position:'sticky', top:12 },
-  panelHeader: { display:'flex', flexDirection:'column', gap:4, marginBottom:8 },
+  // 오른쪽 카드 왼쪽 여백 넉넉히
+  rightPanel: {
+    background:'#fff',
+    padding:'40px 20px 20px 23px', // top, right, bottom, left
+    borderRadius:'8px',
+    boxShadow:'0 2px 8px rgba(0,0,0,.1)'
+  },
+  panelHeader: { display:'flex', flexDirection:'column', gap:12, marginBottom:8 },
   listBox: { border:'1px solid #e5e7eb', borderRadius:10, maxHeight:380, overflow:'auto', padding:8, background:'#fafafa', marginBottom:10 },
   item: { display:'grid', gridTemplateColumns:'1fr auto', alignItems:'center', padding:'8px 10px',
     borderRadius:10, background:'#fff', border:'1px solid #e5e7eb', marginBottom:8 },

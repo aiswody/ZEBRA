@@ -158,8 +158,8 @@ def compute_scope2_for_building_year(building_id: int, year: int):
     """Scope2(전력) 합계 (kgCO2eq)"""
     total_kwh = _sum_electricity_kwh(building_id, year)
     co2 = total_kwh * ELEC_CO2
-    ch4 = total_kwh * ELEC_CH4
-    n2o = total_kwh * ELEC_N2O
+    ch4 = total_kwh * (ELEC_CH4 / Decimal('1000'))
+    n2o = total_kwh * (ELEC_N2O / Decimal('1000'))
     return co2 + ch4*GWP_CH4 + n2o*GWP_N2O
 
 

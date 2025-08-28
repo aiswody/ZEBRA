@@ -1,8 +1,2 @@
 # reports/serializers.py
-from rest_framework import serializers
-
-class ReportLiveSerializer(serializers.Serializer):
-    meta = serializers.DictField()
-    institution = serializers.DictField()
-    buildings = serializers.ListField()
-    emissions = serializers.DictField()
+# 보고서 다운로드 자체에 집중 > serializers.py 필요 x

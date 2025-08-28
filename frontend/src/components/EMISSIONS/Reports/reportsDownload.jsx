@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import heroTop from "../../../assets/hero-right.png"; // 상단에 넣을 이미지 경로
+import React, { useEffect, useState } from "react";
+import heroTop from "../../../assets/hero-right.png"; // 우측 일러스트
 
 export default function ReportsDownload({ onDownload }) {
   const [scope, setScope] = useState("TOTAL");
@@ -7,27 +7,101 @@ export default function ReportsDownload({ onDownload }) {
   const [orgId, setOrgId] = useState(null);
   const [buildingId, setBuildingId] = useState(null);
 
+  // 화면이 “낮은 높이”일 땐 우측 이미지를 숨겨 1열로 전환 (세로 스크롤 감소)
+  const [isShort, setIsShort] = useState(false);
+  useEffect(() => {
+    const onResize = () => setIsShort(window.innerHeight < 820);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   const call = (fmt) => onDownload?.(fmt, scope, yearRange, orgId, buildingId);
 
   return (
     <div style={sx.page}>
-      {/* 상단 배경 이미지 영역 */}
-      <div style={sx.hero}>
-        <img src={heroTop} alt="background" style={sx.heroImg} />
-        <div style={sx.heroOverlay}>
-          <h1 style={sx.title}>전체 리포트 다운로드</h1>
-          <p style={sx.subtitle}>필터를 선택하고 형식을 골라 내려받으세요.</p>
-        </div>
-      </div>
+      {/* 상단 안내 카드 – 화면 가로 꽉 채움 */}
+      <section style={sx.infoCard}>
+        <h2 style={sx.infoTitle}>전체 리포트 다운로드</h2>
+        <p style={sx.infoDesc}>필터를 선택하고 형식을 골라 내려받으세요.</p>
+      </section>
 
-      {/* 필터 */}
-      <div style={sx.filters}>
-        <div style={sx.filterItem}>
+      {/* 히어로 카드 – 높이/여백 컴팩트 + 낮은 화면에선 1열 */}
+      <section
+        style={{
+          ...sx.heroCard,
+          height: "clamp(280px, 44vh, 420px)",
+          gridTemplateColumns: isShort ? "1fr" : "1fr 1fr",
+        }}
+      >
+        <div style={sx.heroLeft}>
+          <h1 style={sx.title}>기관 및 기간 선택</h1>
+          <p style={sx.subtitle}>기관과 시작연도를 선택하세요.</p>
+
+          {/* 얇은 구분선 */}
+          <div style={sx.hr} />
+
+          {/* 메인 폼 */}
+          <div style={sx.formCol}>
+            <label style={sx.label}>시작연도(From)</label>
+            <div style={sx.inputWrap}>
+              <span style={sx.leadingIcon} aria-hidden>
+                📅
+              </span>
+              <input
+                type="number"
+                value={yearRange.from}
+                onChange={(e) =>
+                  setYearRange((v) => ({
+                    ...v,
+                    from: Number(e.target.value) || v.from,
+                  }))
+                }
+                style={sx.input}
+              />
+              <span style={sx.trailingCaret} aria-hidden>
+                ▾
+              </span>
+            </div>
+
+            <label style={{ ...sx.label, marginTop: 8 }}>기관</label>
+            <div style={sx.inputWrap}>
+              <span style={sx.leadingIcon} aria-hidden>
+                🏢
+              </span>
+              <input
+                placeholder="ORG ID"
+                value={orgId || ""}
+                onChange={(e) => setOrgId(e.target.value || null)}
+                style={sx.input}
+              />
+              <span style={sx.trailingCaret} aria-hidden>
+                ▾
+              </span>
+            </div>
+
+            <button style={sx.primaryBtn} onClick={() => call("pdf")}>
+              보고서 다운로드
+            </button>
+          </div>
+        </div>
+
+        {/* 우측 일러스트: 낮은 화면에선 숨김 */}
+        {!isShort && (
+          <div style={sx.heroRight}>
+            <img src={heroTop} alt="illustration" style={sx.illustration} />
+          </div>
+        )}
+      </section>
+
+      {/* 숨김 블록(틀 유지) */}
+      <div style={sx.filtersHidden}>
+        <div style={sx.filterItemHidden}>
           <label style={sx.label}>Scope</label>
           <select
             value={scope}
             onChange={(e) => setScope(e.target.value)}
-            style={sx.select}
+            style={sx.selectHidden}
           >
             <option value="TOTAL">Total</option>
             <option value="SCOPE1">Scope 1</option>
@@ -35,101 +109,143 @@ export default function ReportsDownload({ onDownload }) {
           </select>
         </div>
 
-        <div style={sx.filterItem}>
-          <label style={sx.label}>시작연도(From)</label>
-          <input
-            type="number"
-            value={yearRange.from}
-            onChange={(e) =>
-              setYearRange((v) => ({ ...v, from: Number(e.target.value) || v.from }))
-            }
-            style={sx.input}
-          />
-        </div>
-        <div style={sx.filterItem}>
+        <div style={sx.filterItemHidden}>
           <label style={sx.label}>끝연도(To)</label>
           <input
             type="number"
             value={yearRange.to}
             onChange={(e) =>
-              setYearRange((v) => ({ ...v, to: Number(e.target.value) || v.to }))
+              setYearRange((v) => ({
+                ...v,
+                to: Number(e.target.value) || v.to,
+              }))
             }
-            style={sx.input}
+            style={sx.inputHidden}
           />
         </div>
-
-        <div style={sx.filterItem}>
-          <label style={sx.label}>기관</label>
-          <input
-            placeholder="ORG ID"
-            value={orgId || ""}
-            onChange={(e) => setOrgId(e.target.value || null)}
-            style={sx.input}
-          />
-        </div>
-        <div style={sx.filterItem}>
-          <label style={sx.label}>건물</label>
-          <input
-            placeholder="BUILDING ID"
-            value={buildingId || ""}
-            onChange={(e) => setBuildingId(e.target.value || null)}
-            style={sx.input}
-          />
-        </div>
-      </div>
-
-      {/* 다운로드 버튼 */}
-      <div style={sx.buttons}>
-        <button style={sx.btn} onClick={() => call("csv")}>CSV</button>
-        <button style={sx.btn} onClick={() => call("xlsx")}>XLSX</button>
-        <button style={sx.btn} onClick={() => call("pdf")}>PDF</button>
       </div>
 
       <div style={sx.note}>
-        * 실제 다운로드 로직은 onDownload에서 API 호출 또는 클라이언트 생성으로 구현하세요.
+        * 상세 범위(Scope)와 끝연도는 기본값으로 설정되었습니다.
       </div>
     </div>
   );
 }
 
+/* ───────── 스타일 ───────── */
 const sx = {
-  page: { padding: 20, display: "flex", flexDirection: "column", gap: 16 },
-  hero: {
-    position: "relative",
-    width: "100%",
-    height: 160, // 원하는 높이로 조정
-    overflow: "hidden",
-    borderRadius: 12,
+  // 좌우는 꽉 차게, 가로 스크롤 차단
+  page: {
+    padding: "16px 0",
+    background: "#f5f7f8",
+    minHeight: "100vh",
+    boxSizing: "border-box",
+    overflowX: "hidden",
   },
-  heroImg: {
+
+  /* 상단 안내 카드 */
+  infoCard: {
+    width: "100%",
+    margin: "0 0 12px 0",
+    background: "#fff",
+    border: "1px solid #e5e7eb",
+    borderRadius: 0,
+    padding: "12px 16px",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+    boxSizing: "border-box",
+  },
+  infoTitle: { margin: 0, fontSize: 16, fontWeight: 700, color: "#111827" },
+  infoDesc: { margin: "4px 0 0", fontSize: 13, color: "#475569" },
+
+  /* 히어로 카드 */
+  heroCard: {
+    width: "100%",
+    background: "#fff",
+    borderRadius: 16,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+    display: "grid",
+    overflow: "hidden",
+    boxSizing: "border-box",
+  },
+
+  heroLeft: {
+    padding: "20px 20px 20px 24px", // ← 패딩 축소
+    display: "flex",
+    flexDirection: "column",
+  },
+
+  heroRight: { position: "relative", width: "100%", height: "100%" },
+  illustration: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
+    display: "block",
   },
-  heroOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: "rgba(0,0,0,0.35)", // 텍스트 가독성을 위해 반투명 오버레이
-    color: "#fff",
+
+  // 타이틀/서브타이틀 + 구분선 (컴팩트)
+  title: { margin: 0, marginBottom: 6, fontSize: 24, fontWeight: 800, color: "#0f172a" },
+  subtitle: { margin: "6px 0 12px", fontSize: 14, color: "#475569" },
+  hr: { height: 1, background: "#e5e7eb", margin: "10px 0 12px" },
+
+  formCol: {
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
-    paddingLeft: 20,
+    gap: 0,
+    maxWidth: "100%",
+    width: "100%",
   },
-  title: { margin: 0, fontSize: 26, fontWeight: 700 },
-  subtitle: { marginTop: 6, fontSize: 14 },
+  label: { fontSize: 12, color: "#475569", marginBottom: 4 },
 
-  filters: { display: "grid", gridTemplateColumns: "repeat(5, minmax(0,1fr))", gap: 12, marginTop: 10 },
-  filterItem: { display: "flex", flexDirection: "column", gap: 6 },
-  label: { fontSize: 12, color: "#333" },
-  select: { height: 36, borderRadius: 8, border: "1px solid #e5e7eb", padding: "0 10px" },
-  input: { height: 36, borderRadius: 8, border: "1px solid #e5e7eb", padding: "0 10px" },
+  inputWrap: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    height: 44,                 // ← 48 → 44
+    borderRadius: 10,
+    border: "1px solid #e5e7eb",
+    background: "#fff",
+    padding: "0 44px",
+    marginTop: 4,
+    marginBottom: 6,
+    width: "85%",
+  },
+  input: {
+    width: "100%",
+    height: "100%",
+    border: "none",
+    outline: "none",
+    fontSize: 16,
+    color: "#111827",
+    background: "transparent",
+  },
+  leadingIcon: { position: "absolute", left: 12, fontSize: 18, opacity: 0.9 },
+  trailingCaret: { position: "absolute", right: 12, fontSize: 16, opacity: 0.5, transform: "translateY(-1px)" },
 
-  buttons: { display: "flex", gap: 8, marginTop: 12 },
-  btn: { height: 36, padding: "0 14px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#f9fafb", cursor: "pointer" },
+  primaryBtn: {
+    marginTop: 10,
+    height: 52,                // ← 56 → 52
+    borderRadius: 12,
+    border: "none",
+    background: "linear-gradient(180deg, #068729 0%, #068729 100%)",
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: 800,
+    cursor: "pointer",
+    boxShadow: "0 8px 20px rgba(34,197,94,0.18)",
+  },
 
-  note: { color: "#64748b", fontSize: 12, marginTop: 6 },
+  // 숨김(틀 유지)
+  filtersHidden: {
+    display: "grid",
+    gridTemplateColumns: "repeat(5, minmax(0,1fr))",
+    gap: 12,
+    marginTop: 0,
+    height: 0,
+    overflow: "hidden",
+  },
+  filterItemHidden: { display: "flex", flexDirection: "column", gap: 6 },
+  selectHidden: { height: 0, padding: 0, border: "none", outline: "none", opacity: 0 },
+  inputHidden: { height: 0, padding: 0, border: "none", outline: "none", opacity: 0 },
+
+  note: { color: "#64748b", fontSize: 12, margin: "8px 16px 0" },
 };

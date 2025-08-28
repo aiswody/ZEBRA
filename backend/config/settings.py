@@ -24,16 +24,13 @@ load_dotenv(BASE_DIR / ".env")
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-tc+vi3q+qc^yl_t7(4ry-7y+-keb%qh5j0$f_)@c!va@5*=*28'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-"""
-env쓸때 바꿀 코드
+# SECRET_KEY = 'django-insecure-tc+vi3q+qc^yl_t7(4ry-7y+-keb%qh5j0$f_)@c!va@5*=*28'
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+# SECURITY WARNING: don't run with debug turned on in production!
+# DEBUG = True
 DEBUG = os.getenv("DEBUG", "False") == "True"
-"""
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 
 ALLOWED_HOSTS = []
@@ -55,11 +52,12 @@ INSTALLED_APPS = [
     'buildings',
     'activities',
     'chatbot',
-    'emissions',
+    'emissions.apps.EmissionsConfig',
+    'reports',
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # CORS 미들웨어는 항상 최상단에 위치해야 합니다.
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -69,11 +67,36 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True  # 개발 단계에서만 전체 허용
+# --- [수정됨] ---
+# CORS 관련 설정을 더 명확하고 안전하게 변경합니다.
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+# --- [추가됨] ---
+# React 앱이 로그인 토큰(Authorization 헤더)을 보낼 수 있도록 허용합니다.
+# 이 설정이 문제 해결의 핵심입니다!
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
     ],
     
     'DEFAULT_PERMISSION_CLASSES': [
@@ -148,6 +171,14 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# 1. React 빌드 결과물(static 파일)이 있는 경로를 알려줍니다.
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, '..', 'frontend', 'build', 'static')
+]
+
+# 2. React의 index.html을 Django 템플릿으로 사용하도록 경로를 추가합니다.
+TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, '..', 'frontend', 'build'))
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -172,4 +203,4 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,   # 로그인 토큰 발급 시 last_login 업데이트
 }
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+default_app_config = "emissions.apps.EmissionsConfig"

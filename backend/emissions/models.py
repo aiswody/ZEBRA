@@ -16,7 +16,7 @@ class EmissionAgg(models.Model):
 
     area_m2 = models.DecimalField(max_digits=18, decimal_places=6, default=0)
 
-    i_solid = models.DecimalField(max_digits=18, decimal_places=6, default=0)
+    i_solid = models.DecimalField(max_digits=18, decimal_places=6, default=0) #면적당 배출량
     i_liquid = models.DecimalField(max_digits=18, decimal_places=6, default=0)
     i_gas = models.DecimalField(max_digits=18, decimal_places=6, default=0)
     i_elec = models.DecimalField(max_digits=18, decimal_places=6, default=0)

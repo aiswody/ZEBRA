@@ -155,6 +155,11 @@ const Input = () => {
     try {
       await api.post(`/activities/buildings/${activeBuildingId}/submit`, payload);
       alert('저장되었습니다.');
+
+      // ✅ 대시보드에게 "이 건물/이 연도"로 다시 불러오라고 알림
+      window.dispatchEvent(
+        new CustomEvent('dashboard:refresh', { detail: { buildingId: activeBuildingId, year } })
+      );
       // 저장 후 최신값 재로드
       const d = await fetchDetail(activeBuildingId, year);
       // 위의 변환 재사용

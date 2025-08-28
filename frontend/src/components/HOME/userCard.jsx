@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/authContext';
-import Ariana from "../../assets/ariana.png"
+import ProfileExample from "../../assets/profile_example.png";  // ✅ 새 프로필 이미지로 변경
 
 function formatKST(iso) {
   if (!iso) return '-';
@@ -28,7 +28,9 @@ export default function UserWelcomeCard() {
     <div style={styles.card}>
       {/* 상단 */}
       <div style={styles.headerRow}>
-      <img src={Ariana} alt="avatar" style={styles.avatar} />
+        {/* ✅ 아리아나 → 얼룩말 프로필 이미지 */}
+        <img src={ProfileExample} alt="avatar" style={styles.avatar} />
+
         <div style={{ textAlign: 'left' }}>
           <div style={styles.title}>{user?.managerName} 님, 안녕하세요!</div>
           <div style={styles.role}>{user?.role || '관리자'}</div>
@@ -69,20 +71,17 @@ export default function UserWelcomeCard() {
 }
 
 const styles = {
-  // 로그인 박스 폭과 동일(부모가 300px이면 width: '100%'로 바꿔도 OK)
   card: {
     width: 300,
     backgroundColor: 'white',
-    padding: '24px 24px 16px',   // ⬅ 하단 패딩 줄여서 버튼 아래 여백 축소
+    padding: '24px 24px 16px',
     borderRadius: 12,
     boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
     textAlign: 'center',
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
-    // minHeight 제거 ⬅ 여백 원인 해결
   },
-
   headerRow: {
     display: 'flex',
     gap: 12,
@@ -91,7 +90,6 @@ const styles = {
     position: 'relative',
   },
   avatar: {
-    
     width: 48,
     height: 48,
     borderRadius: '50%',
@@ -99,7 +97,7 @@ const styles = {
     flex: '0 0 auto',
   },
   title: {
-    fontSize: 16,   // 로그인 input/버튼과 통일
+    fontSize: 16,
     fontWeight: 700,
     color: '#111827',
     whiteSpace: 'nowrap',
@@ -108,10 +106,9 @@ const styles = {
   },
   role: {
     marginTop: 2,
-    fontSize: 12,   // 보조 텍스트는 12px
+    fontSize: 12,
     color: '#6b7280',
   },
-
   icons: { marginLeft: 'auto', display: 'flex', gap: 8 },
   iconBox: {
     width: 28,
@@ -123,9 +120,7 @@ const styles = {
     color: '#9ca3af',
     fontSize: 12,
   },
-
   line: { height: 1, background: '#f3f4f6', margin: '12px 0' },
-
   orgRow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 },
   pin: { color: '#0F4D2A' },
   orgLink: {
@@ -138,15 +133,12 @@ const styles = {
   },
   sep: { color: '#94a3b8', margin: '0 2px', fontSize: 12 },
   orgType: { color: '#4b5563', fontSize: 12 },
-
   lastLogin: {
     color: '#9ca3af',
     fontSize: 12,
     marginTop: 6,
     textAlign: 'left',
   },
-
-
   logoutBtn: {
     marginTop: 20,
     width: '100%',
@@ -154,7 +146,7 @@ const styles = {
     background: '#185c37',
     color: '#fff',
     border: 0,
-    borderRadius: 9,    // ✅ 기존 999 → 12 로 수정
+    borderRadius: 9,
     fontWeight: 700,
     fontSize: 13,
     cursor: 'pointer',
