@@ -65,16 +65,16 @@ export default function DashboardHeader({
       <header style={headerStyle}>
         {/* 좌측: 로고/제목 + 기관/건물 선택 */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 280, flex: "1 1 440px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, minHeight: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 0, minHeight: 28 }}>
             <img
               src={appLogo}
               alt=""
               style={{ width: 28, height: 28, objectFit: "contain", display: "block" }}
               onError={(e) => { e.currentTarget.style.display = "none"; }}
             />
-            <h1 style={{ fontSize: 22, fontWeight: 700, fontWeight: 'bold', margin: 0, color: "#111827" }}> 
-  공공건축물 탄소 절감을 위한 대시보드
-</h1>
+            <h1 style={titleStyle}>
+              공공건축물 탄소 절감을 위한 대시보드
+            </h1>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -135,10 +135,10 @@ export default function DashboardHeader({
 /* ───────── 스타일 ───────── */
 const cardStyle = {
   background: "#fff",
-  padding: "45px 25px",              // ← 내부 여백 (위/좌/우/아래 모두 24px)
+  padding: "24px",          // 카드 안쪽 패딩 24px
   borderRadius: "8px",
   boxShadow: "0 2px 8px rgba(0,0,0,.1)",
-  marginTop: "0px",            // ← 화면 상단에서 카드 시작 위치
+  marginTop: "0px",        // 카드 바깥 위 여백 32px
   marginBottom: "20px"
 };
 
@@ -148,6 +148,13 @@ const headerStyle = {
   alignItems: "flex-start",
   gap: 16,
   flexWrap: "wrap"
+};
+
+const titleStyle = {
+  fontSize: 22,             // 텍스트 22px
+  fontWeight: "bold",       // bold
+  margin: "0 0 24px 0",     // 텍스트 아래 여백 24px
+  color: "#111827"
 };
 
 const orgText = {

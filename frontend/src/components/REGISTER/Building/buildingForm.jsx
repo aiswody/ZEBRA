@@ -231,7 +231,7 @@ const Building = () => {
     <div style={styles.pageGrid}>
       {/* 좌측 폼 */}
       <div style={styles.container}>
-        <h2 style={styles.title}>건물 등록</h2>
+        <h2 style={styles.title}>🏛 건물 등록</h2>
 
         {/* 기관명 표시 */}
         <div style={styles.section}>

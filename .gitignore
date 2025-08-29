@@ -18,3 +18,5 @@ dist/
 
 # 기타
 .DS_Store
+
+*.sqlite3
