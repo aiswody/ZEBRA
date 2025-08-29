@@ -20,3 +20,5 @@ dist/
 .DS_Store
 .env
 *.sqlite3
+backend/.env
+*.env
