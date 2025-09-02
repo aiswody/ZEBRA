@@ -42,8 +42,6 @@ export default function Emissions({
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
-
-  // 동시에 여러 번 눌러도 마지막 요청만 반영되도록 요청 토큰
   const reqTokenRef = useRef(0);
 
   const fetchAll = useCallback(async (rawBid, y) => {
@@ -83,7 +81,6 @@ export default function Emissions({
         getUseCompare(bid, y, "scope2"),
       ]);
 
-      // 취소/경합 방지: 내가 마지막 요청이 아니면 무시
       if (myToken !== reqTokenRef.current) return;
 
       setData({
@@ -116,25 +113,20 @@ export default function Emissions({
         useTotal: null,
       });
     } finally {
-      if (reqTokenRef.current === myToken) {
-        setLoading(false);
-      }
+      if (reqTokenRef.current === myToken) setLoading(false);
     }
   }, []);
 
-  // Header에서 건물 선택 시 호출
   const handleSelectBuilding = useCallback((bid) => {
     const idNum = Number(bid);
     setBuildingId(idNum || null);
     if (idNum) fetchAll(idNum, year);
   }, [fetchAll, year]);
 
-  // 만약 year 변경 UI가 생긴다면, 아래처럼 다시 로드
   useEffect(() => {
     if (buildingId) fetchAll(buildingId, year);
   }, [buildingId, year, fetchAll]);
 
-    // 등록 화면에서 쏘는 새로고침 이벤트 수신 → 즉시 재조회
   useEffect(() => {
     const handler = (e) => {
       const { buildingId: bid = buildingId, year: y = year } = e.detail || {};
@@ -143,31 +135,28 @@ export default function Emissions({
     window.addEventListener('dashboard:refresh', handler);
     return () => window.removeEventListener('dashboard:refresh', handler);
   }, [buildingId, year, fetchAll]);
+
   const renderTabView = () => {
-    if (!buildingId)
-      return <p>건물을 선택하세요.</p>;
-
-    if (loading)
-      return <p>불러오는 중…</p>;
-
-    if (err)
-      return <p style={{ color: "crimson" }}>{err}</p>;
+    if (!buildingId) return <p>건물을 선택하세요.</p>;
+    if (loading) return <p>불러오는 중…</p>;
+    if (err) return <p style={{ color: "crimson" }}>{err}</p>;
 
     switch (tab) {
       case "scope1":
-        // scope1: { summary, by_fuel, per_area, compare, useCompare, trend }
-        return <Scope1Emission {...data.scope1} />;
+        return <Scope1Emission {...data.scope1} ratio={data.ratio} />;
       case "scope2":
-        // scope2: { summary, per_area, compare, useCompare, trend }
-        return <Scope2Emission {...data.scope2} />;
+        return <Scope2Emission {...data.scope2} ratio={data.ratio} />;
       case "total":
       default:
-        // total: { summary, per_area_radar }, trendTotal, ratio
+        // ✅ useTotal(= /use-compare total 응답), buildingId/year를 함께 내려줌
         return (
           <TotalEmission
-            {...data.total}
+            {...data.total}            // { summary, per_area_radar }
             trend={data.trendTotal}
             ratio={data.ratio}
+            useCompare={data.useTotal} // ← 여기 추가
+            buildingId={buildingId}    // ← 여기 추가 (row2에서 API 모드 가능)
+            year={year}                // ← 여기 추가
           />
         );
     }

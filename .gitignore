@@ -18,7 +18,9 @@ dist/
 
 # 기타
 .DS_Store
-.env
 *.sqlite3
+
+#env파일 보호
 backend/.env
 *.env
+.env

@@ -65,14 +65,14 @@ export default function DashboardHeader({
       <header style={headerStyle}>
         {/* 좌측: 로고/제목 + 기관/건물 선택 */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 280, flex: "1 1 440px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 0, minHeight: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24, minHeight: 28 }}>
             <img
               src={appLogo}
               alt=""
               style={{ width: 28, height: 28, objectFit: "contain", display: "block" }}
               onError={(e) => { e.currentTarget.style.display = "none"; }}
             />
-            <h1 style={titleStyle}>
+            <h1 style={titleStyle}> 
               공공건축물 탄소 절감을 위한 대시보드
             </h1>
           </div>
@@ -135,11 +135,12 @@ export default function DashboardHeader({
 /* ───────── 스타일 ───────── */
 const cardStyle = {
   background: "#fff",
-  padding: "24px",          // 카드 안쪽 패딩 24px
+  padding: "24px",              // ← 카드 내부 패딩 24px
   borderRadius: "8px",
   boxShadow: "0 2px 8px rgba(0,0,0,.1)",
-  marginTop: "0px",        // 카드 바깥 위 여백 32px
-  marginBottom: "20px"
+  marginTop: "-3px",            // ← 위쪽 외부 여백 32px
+  marginBottom: "20px",
+  marginLeft: "2px"
 };
 
 const headerStyle = {
@@ -151,9 +152,9 @@ const headerStyle = {
 };
 
 const titleStyle = {
-  fontSize: 22,             // 텍스트 22px
-  fontWeight: "bold",       // bold
-  margin: "0 0 24px 0",     // 텍스트 아래 여백 24px
+  fontSize: 22,                 // ← 폰트 크기 22px
+  fontWeight: "bold",           // ← bold
+  margin: 0,                    // ← 기본 margin 제거
   color: "#111827"
 };
 

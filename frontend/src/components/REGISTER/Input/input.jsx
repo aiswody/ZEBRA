@@ -1,3 +1,4 @@
+// frontend/src/components/INPUT/input.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import BuildingList from './comp/buildingList';
 import InfoBubble from './comp/infoBubble';
@@ -5,6 +6,7 @@ import Scope1Card from './comp/scope1Card';
 import Scope2Card from './comp/scope2Card';
 import AreaCard from './comp/areaCard';
 import { api } from '../../../api/client';
+import logoFuel from '../../../assets/logo_fuel.png'; // 연료 아이콘
 
 const yearOptions = (() => {
   const now = new Date().getFullYear();
@@ -15,10 +17,8 @@ const Input = () => {
   const [buildings, setBuildings] = useState([]);
   const [activeBuildingId, setActiveBuildingId] = useState(null);
   const [loading, setLoading] = useState(true);
-
   const [year, setYear] = useState(new Date().getFullYear());
 
-  // 초깃값(서버에서 가져온 저장값)과, 편집 중 데이터(draft)
   const [initialS1, setInitialS1] = useState(null);
   const [initialS2, setInitialS2] = useState(null);
   const [initialArea, setInitialArea] = useState(null);
@@ -54,7 +54,6 @@ const Input = () => {
   const fetchDetail = async (bId, y) => {
     if (!bId || !y) return { scope1: {}, scope2: {}, areas: null };
     const { data } = await api.get(`/activities/buildings/${bId}/detail`, { params: { year: y } });
-    // data: { scope1: {solid:{tier,unit,amounts,ef,cv}...}, scope2:{electricity:{kwhs}}, areas:{gross,conditioned}}
     return data;
   };
 
@@ -66,11 +65,9 @@ const Input = () => {
       try {
         const d = await fetchDetail(activeBuildingId, year);
 
-        // Scope1 카드가 기대하는 initialValue 형태로 변환
         const toTierInit = (cat) => {
           if (!cat) return null;
           const [amountOne = ""] = cat.amounts || [];
-          // ef/cv 키 변환
           const sectionValues = {};
           if (cat.emission_factor != null) sectionValues.ef = cat.emission_factor.toString();
           if (cat.calorific_value != null) sectionValues.ncv = cat.calorific_value.toString();
@@ -97,7 +94,6 @@ const Input = () => {
           conditioned: d.areas.conditioned?.toString?.() ?? '',
         } : null);
 
-        // 드래프트 초기화
         setDraftS1(null);
         setDraftS2(null);
         setDraftArea(null);
@@ -117,11 +113,7 @@ const Input = () => {
     const put = (key, v) => {
       if (!v) return;
       const amounts = (v.amounts || []).map(norm).filter((n) => typeof n === 'number' && !Number.isNaN(n));
-      const body = {
-        tier: Number(v.tier || 1),
-        unit: v.unit || 'unit',
-        amounts,
-      };
+      const body = { tier: Number(v.tier || 1), unit: v.unit || 'unit', amounts };
       if (v.emission_factor != null && v.emission_factor !== '') body.emission_factor = norm(v.emission_factor);
       if (v.calorific_value != null && v.calorific_value !== '') body.calorific_value = norm(v.calorific_value);
       s1Payload[key] = body;
@@ -143,7 +135,7 @@ const Input = () => {
       return { gross, conditioned };
     })();
 
-    const out = { year, };
+    const out = { year };
     if (Object.keys(s1Payload).length) out.scope1 = s1Payload;
     if (Object.keys(s2Payload).length) out.scope2 = s2Payload;
     if (areaPayload) out.areas = areaPayload;
@@ -154,15 +146,11 @@ const Input = () => {
     if (!activeBuildingId) return alert('건물을 선택하세요.');
     try {
       await api.post(`/activities/buildings/${activeBuildingId}/submit`, payload);
-      alert('저장되었습니다.');
+      alert('저장되었다.');
+      window.dispatchEvent(new CustomEvent('dashboard:refresh', { detail: { buildingId: activeBuildingId, year } }));
 
-      // ✅ 대시보드에게 "이 건물/이 연도"로 다시 불러오라고 알림
-      window.dispatchEvent(
-        new CustomEvent('dashboard:refresh', { detail: { buildingId: activeBuildingId, year } })
-      );
       // 저장 후 최신값 재로드
       const d = await fetchDetail(activeBuildingId, year);
-      // 위의 변환 재사용
       const toTierInit = (cat) => {
         if (!cat) return null;
         const [amountOne = ""] = cat.amounts || [];
@@ -192,37 +180,56 @@ const Input = () => {
       } : null);
     } catch (e) {
       console.error(e);
-      alert('저장에 실패했습니다.');
+      alert('저장에 실패했다.');
     }
   };
 
   return (
     <div style={styles.page}>
-      <div style={styles.topRow}>
-        <div style={styles.leftCol}>
+      {/* ===== 위쪽 카드 ===== */}
+      <section style={styles.topCard}>
+        {/* 제목 줄 */}
+        <div style={styles.titleRow}>
+          <img src={logoFuel} alt="연료 아이콘" style={styles.titleIcon} />
           <h3 style={styles.sectionTitle}>연료 사용량 입력</h3>
+        </div>
 
-          {/* 연도 선택 */}
-          <div style={{ display:'flex', gap:8, marginBottom:8 }}>
-            <label style={{ fontSize:13, color:'#374151' }}>연도</label>
-            <select value={year} onChange={(e)=>setYear(Number(e.target.value))} style={styles.yearSelect}>
-              {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
+        {/* 좌/우 2컬럼 */}
+        <div style={styles.topRow}>
+          {/* 왼쪽 */}
+          <div style={styles.leftCol}>
+            {/* 연도 선택 */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 4, marginBottom: 12 }}>
+              <label style={styles.yearLabel}>연도 : </label>
+              <select
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value))}
+                style={styles.yearSelect}
+              >
+                {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+
+            <BuildingList
+              buildings={buildings}
+              activeId={activeBuildingId}
+              onSelect={setActiveBuildingId}
+              loading={loading}
+            />
           </div>
 
-          <BuildingList
-            buildings={buildings}
-            activeId={activeBuildingId}
-            onSelect={setActiveBuildingId}
-            loading={loading}
-          />
+          {/* 오른쪽 */}
+          <div style={styles.rightCol}>
+            <InfoBubble />
+          </div>
         </div>
+        {/* 카드 안쪽 divider 제거 */}
+      </section>
 
-        <div style={styles.rightCol}>
-          <InfoBubble />
-        </div>
-      </div>
+      {/* 카드 밖(아래)에 구분선 */}
+      <div style={styles.dividerOuter} />
 
+      {/* ===== 아래 섹션 ===== */}
       <div style={styles.bottomRow}>
         <div style={styles.bottomLeft}>
           <Scope1Card
@@ -255,22 +262,81 @@ const Input = () => {
 };
 
 const styles = {
-  page: { display: 'flex', flexDirection: 'column', gap: 16, padding: 20 },
+  page: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 20,
+    padding: '12px 16px 28px',
+  },
+
+  topCard: {
+    background: '#fff',
+    borderRadius: 8,
+    boxShadow: "0 2px 8px rgba(0,0,0,.1)",
+    padding: '25px 20px 16px',
+    marginTop: 20,
+    marginBottom: 15,
+    marginLeft: -16, // 좌측 맞춤
+  },
+
+  titleRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 30,
+    marginLeft: 4,
+    marginTop: -1,
+  },
+  titleIcon: { width: 28, height: 28, objectFit: 'contain' },
+  sectionTitle: { margin: 0, fontSize: 22, lineHeight: '28px', fontWeight: 700, color: '#111827' },
+
   topRow: { display: 'grid', gridTemplateColumns: '380px 1fr', gap: 16, alignItems: 'start' },
   leftCol: {},
   rightCol: { display: 'flex', justifyContent: 'flex-start' },
-  sectionTitle: { margin: '0 0 12px 0' },
-  yearSelect: {
-    height: 36, borderRadius: 10, border: '1px solid #e5e7eb', padding: '0 10px', background:'#fff'
+
+  yearLabel: { fontSize: 16, fontWeight: 400, color: '#6B7280', marginTop: 4, marginLeft: 2,},
+  yearSelect: { height: 36, borderRadius: 10, border: '1px solid #e5e7eb', padding: '0 10px', background: '#fff' },
+
+  // 카드 밖 구분선 (카드와 동일한 좌측 오프셋/폭 보정)
+  dividerOuter: {
+    height: 1,
+    background: '#e5e7eb',
+    margin: '12px 0',
+    marginTop : 10,
+    width: 'calc(100% + 28px)', // 좌 -14 보정 * 2
+    marginLeft: -16,
+    width: '99%',
   },
-  bottomRow: { display: 'grid', gridTemplateColumns: '1fr 360px', gap: 16, alignItems: 'start' },
+
+  bottomRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 360px',
+    gap: 16,
+    alignItems: 'start',
+    marginTop: 25,
+    marginLeft: -16, // 위 카드와 좌측 라인 맞춤
+  },
   bottomLeft: {},
   bottomRight: { display: 'flex', flexDirection: 'column', gap: 16 },
-  footer: { display: 'flex', justifyContent: 'center', marginTop: 12 },
+
+  footer: { display: 'flex', justifyContent: 'center', marginTop: 20 },
+
   submitBtn: {
-    minWidth: 240, height: 44, borderRadius: 10, border: 'none',
-    background: '#166534', color: 'white', fontWeight: 600, cursor: 'pointer',
+    marginTop: 70,
+    height: 50,
+    minWidth: 200,
+    borderRadius: 12,
+    border: 'none',
+    background: 'linear-gradient(180deg, #068729 0%, #068729 100%)',
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 500,
+    cursor: 'pointer',
+    boxShadow: '0 8px 20px rgba(34,197,94,0.18)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-};
+}; // ← styles 객체 닫기
 
 export default Input;

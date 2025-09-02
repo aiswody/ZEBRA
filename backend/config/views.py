@@ -1,7 +1,4 @@
-from django.shortcuts import render
+from django.http import JsonResponse
 
 def index(request):
-    """
-    모든 non-API 요청을 React의 index.html로 렌더링합니다.
-    """
-    return render(request, 'index.html')
+    return JsonResponse({"message": "Django API server running"})

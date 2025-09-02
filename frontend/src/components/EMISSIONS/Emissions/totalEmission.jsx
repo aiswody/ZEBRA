@@ -1,18 +1,24 @@
+// totalEmission.jsx
 import Row1 from "./details/row1";
 import Row2 from "./details/row2";
 import Row3 from "./details/row3";
 
 const toNum = (v) => (v == null ? 0 : Number(v) || 0);
 
-export default function TotalEmission({ summary, per_area_radar, trend }) {
-  // 시계열
+export default function TotalEmission({
+  summary,
+  per_area_radar,
+  trend,
+  useCompare,
+  buildingId,   // ← 추가: 상위에서 내려줄 선택 건물 id
+  year,         // ← 선택 (쿼리/상태에서 넘길 수 있으면)
+}) {
   const series =
     trend?.x_axis?.map((x, i) => ({
       date: `${x}-01`,
       value: toNum(trend.series?.periodic_total?.[i]),
     })) || [];
 
-  // 면적당 강도
   const b = per_area_radar?.building || {};
   const p = per_area_radar?.portfolio_avg || {};
   const buildingGas = {
@@ -28,7 +34,6 @@ export default function TotalEmission({ summary, per_area_radar, trend }) {
     electricity: toNum(p.electricity),
   };
 
-  // ⬅⬅ fallback(목록 화면)에서 Graph2가 쓸 합계 값 복구!
   const buildingTotal =
     buildingGas.solid + buildingGas.liquid + buildingGas.gas + buildingGas.electricity;
   const usageAvgTotal =
@@ -44,8 +49,6 @@ export default function TotalEmission({ summary, per_area_radar, trend }) {
         iTotal={toNum(summary?.i_total)}
       />
 
-      {/* 목록(/emissions) → 위 합계로 렌더
-          상세(/emissions/:id) → Row2가 buildingId 감지해서 API(벤치마크 95.xx)로 전환 */}
       <Row2
         buildingGas={buildingGas}
         averageGas={averageGas}
@@ -53,6 +56,9 @@ export default function TotalEmission({ summary, per_area_radar, trend }) {
         usageAvgTotal={usageAvgTotal}
         scope1Emission={toNum(summary?.scope1_kg)}
         scope2Emission={toNum(summary?.scope2_kg)}
+        useCompare={useCompare}
+        buildingId={buildingId}   // ← 여기!
+        year={year}               // ← 선택
       />
 
       <Row3 series={series} unitLabel="kgCO2eq" />

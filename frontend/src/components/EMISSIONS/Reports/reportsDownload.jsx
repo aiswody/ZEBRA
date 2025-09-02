@@ -1,13 +1,22 @@
 import React, { useEffect, useState } from "react";
-import heroTop from "../../../assets/hero-right.png"; // 우측 일러스트
+import heroTop from "../../../assets/hero-right.png";         // 우측 일러스트
+import logoChart from "../../../assets/logo_chart.png";       // 상단 카드 아이콘
+import { downloadReport, fetchReportContext } from "api/client";
+import { fetchMe } from "api/auth"; // /auth/me 호출
 
-export default function ReportsDownload({ onDownload }) {
+export default function ReportsDownload() {
   const [scope, setScope] = useState("TOTAL");
-  const [yearRange, setYearRange] = useState({ from: 2022, to: 2025 });
+  const [yearRange, setYearRange] = useState({ from: "", to: "" });
+
+  // 내정보 기반 기관 정보
   const [orgId, setOrgId] = useState(null);
+  const [orgName, setOrgName] = useState("");
+  const [loadingMe, setLoadingMe] = useState(true);
+
+  // (필요 시 사용) 건물 ID
   const [buildingId, setBuildingId] = useState(null);
 
-  // 화면이 “낮은 높이”일 땐 우측 이미지를 숨겨 1열로 전환 (세로 스크롤 감소)
+  // 낮은 화면 최적화
   const [isShort, setIsShort] = useState(false);
   useEffect(() => {
     const onResize = () => setIsShort(window.innerHeight < 820);
@@ -16,85 +25,173 @@ export default function ReportsDownload({ onDownload }) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const call = (fmt) => onDownload?.(fmt, scope, yearRange, orgId, buildingId);
+  // ───────── 기관명/ID: 내정보 API로 자동 세팅 ─────────
+  useEffect(() => {
+    (async () => {
+      try {
+        const me = await fetchMe();
+
+        const name =
+          me?.institution?.name ??
+          me?.institution_name ??
+          me?.institutionName ??
+          "";
+
+        const id =
+          me?.institution?.id ??
+          me?.institution_id ??
+          me?.institutionId ??
+          null;
+
+        setOrgName(name);
+        setOrgId(id);
+      } catch (e) {
+        console.warn("fetchMe failed", e);
+      } finally {
+        setLoadingMe(false);
+      }
+    })();
+  }, []);
+
+  // 파일명에서 금지문자 제거 + 길이 제한
+  const sanitize = (s) =>
+    String(s || "")
+      .replace(/[\\/:*?"<>|]/g, "-")
+      .replace(/\s+/g, "_")
+      .slice(0, 80);
+
+  // 서버 헤더에서 파일명 파싱
+  const getFilenameFromHeader = (cd, year) => {
+    if (!cd) return `report_${year}.docx`;
+    const m = String(cd).match(/filename\*?=(?:UTF-8'')?([^;]+)/i);
+    if (m && m[1]) return decodeURIComponent(m[1].replace(/"/g, ""));
+    const m2 = String(cd).match(/filename="?([^"]+)"?/i);
+    if (m2 && m2[1]) return m2[1];
+    return `report_${year}.docx`;
+  };
+
+  // ✅ 다운로드 핸들러 (파일명: 기관명_연도.docx 우선)
+  const handleDownload = async () => {
+    try {
+      const year = yearRange.from;
+
+      // 1) 컨텍스트에서 기관명 우선 시도, 없으면 내정보(orgName) 사용
+      let instName = orgName || null;
+      try {
+        const ctx = await fetchReportContext(year); // /reports/context
+        const ctxData = ctx?.data ?? ctx; // axios 응답/바디 둘 다 커버
+        instName =
+          ctxData?.institution_name ??
+          ctxData?.institution?.name ??
+          instName;
+      } catch {
+        // 컨텍스트 실패해도 진행
+      }
+
+      // 2) 파일 다운로드
+      const res = await downloadReport(year); // /reports/download
+
+      // 3) 파일명: 서버 헤더 우선, 없으면 기관명_연도.docx
+      const cd = res.headers?.["content-disposition"];
+      let filename = getFilenameFromHeader(cd, year);
+      if (!cd && instName) filename = `${sanitize(instName)}_${year}.docx`;
+
+      const blob = new Blob([res.data], {
+        type:
+          res.headers?.["content-type"] ||
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert(e?.response?.data?.detail || "보고서 다운로드 실패");
+    }
+  };
 
   return (
     <div style={sx.page}>
-      {/* 상단 안내 카드 – 화면 가로 꽉 채움 */}
+      {/* 상단 안내 카드 */}
       <section style={sx.infoCard}>
-        <h2 style={sx.infoTitle}>전체 리포트 다운로드</h2>
-        <p style={sx.infoDesc}>필터를 선택하고 형식을 골라 내려받으세요.</p>
+        <div style={sx.infoInner}>
+          <div style={sx.titleRow}>
+            <img src={logoChart} alt="Chart Logo" style={sx.infoIcon} />
+            <h2 style={sx.infoTitle}>전체 리포트 다운로드</h2>
+          </div>
+          <p style={sx.infoDesc}>필터를 선택하고 형식을 골라 내려받으세요.</p>
+        </div>
       </section>
 
-      {/* 히어로 카드 – 높이/여백 컴팩트 + 낮은 화면에선 1열 */}
+      {/* 히어로 카드 */}
       <section
         style={{
           ...sx.heroCard,
-          height: "clamp(280px, 44vh, 420px)",
+          height: "clamp(380px, 50vh, 460px)",
           gridTemplateColumns: isShort ? "1fr" : "1fr 1fr",
         }}
       >
         <div style={sx.heroLeft}>
-          <h1 style={sx.title}>기관 및 기간 선택</h1>
-          <p style={sx.subtitle}>기관과 시작연도를 선택하세요.</p>
-
-          {/* 얇은 구분선 */}
+          <h1 style={sx.title}>기간 선택</h1>
+          <p style={sx.subtitle}>시작연도를 선택하세요.</p>
           <div style={sx.hr} />
 
-          {/* 메인 폼 */}
           <div style={sx.formCol}>
-            <label style={sx.label}>시작연도(From)</label>
+            <label style={{ ...sx.label, marginTop: 12 }}>시작연도(From)</label>
             <div style={sx.inputWrap}>
-              <span style={sx.leadingIcon} aria-hidden>
-                📅
-              </span>
+              <span style={sx.leadingIcon} aria-hidden>📅</span>
               <input
                 type="number"
+                placeholder="시작연도를 입력하세요"
                 value={yearRange.from}
                 onChange={(e) =>
-                  setYearRange((v) => ({
-                    ...v,
-                    from: Number(e.target.value) || v.from,
-                  }))
+                  setYearRange((v) => ({ ...v, from: Number(e.target.value) || v.from }))
                 }
                 style={sx.input}
               />
-              <span style={sx.trailingCaret} aria-hidden>
-                ▾
-              </span>
+              <span style={sx.trailingCaret} aria-hidden>▾</span>
             </div>
 
             <label style={{ ...sx.label, marginTop: 8 }}>기관</label>
             <div style={sx.inputWrap}>
-              <span style={sx.leadingIcon} aria-hidden>
-                🏢
-              </span>
+              <span style={sx.leadingIcon} aria-hidden>🏢</span>
               <input
-                placeholder="ORG ID"
-                value={orgId || ""}
-                onChange={(e) => setOrgId(e.target.value || null)}
-                style={sx.input}
+                placeholder={loadingMe ? "불러오는 중..." : "기관명"}
+                value={orgName}
+                readOnly
+                style={{ ...sx.input, color: orgName ? "#111827" : "#9CA3AF" }}
               />
-              <span style={sx.trailingCaret} aria-hidden>
-                ▾
-              </span>
+              <span style={sx.trailingCaret} aria-hidden>▾</span>
             </div>
 
-            <button style={sx.primaryBtn} onClick={() => call("pdf")}>
+            <button style={sx.primaryBtn} onClick={handleDownload}>
               보고서 다운로드
             </button>
           </div>
         </div>
 
-        {/* 우측 일러스트: 낮은 화면에선 숨김 */}
         {!isShort && (
           <div style={sx.heroRight}>
-            <img src={heroTop} alt="illustration" style={sx.illustration} />
+            <img
+              src={heroTop}
+              alt="illustration"
+              style={{
+                ...sx.illustration,
+                // 오른쪽 라운드가 확실히 보이도록 보강
+                borderTopRightRadius: 16,
+                borderBottomRightRadius: 16,
+              }}
+            />
           </div>
         )}
       </section>
 
-      {/* 숨김 블록(틀 유지) */}
+      {/* 숨김 블록 */}
       <div style={sx.filtersHidden}>
         <div style={sx.filterItemHidden}>
           <label style={sx.label}>Scope</label>
@@ -108,133 +205,111 @@ export default function ReportsDownload({ onDownload }) {
             <option value="SCOPE2">Scope 2</option>
           </select>
         </div>
-
         <div style={sx.filterItemHidden}>
           <label style={sx.label}>끝연도(To)</label>
           <input
             type="number"
             value={yearRange.to}
             onChange={(e) =>
-              setYearRange((v) => ({
-                ...v,
-                to: Number(e.target.value) || v.to,
-              }))
+              setYearRange((v) => ({ ...v, to: Number(e.target.value) || v.to }))
             }
             style={sx.inputHidden}
           />
         </div>
       </div>
 
-      <div style={sx.note}>
-        * 상세 범위(Scope)와 끝연도는 기본값으로 설정되었습니다.
-      </div>
+      <div style={sx.note}>* 상세 범위(Scope)와 시작연도는 기본값으로 설정되었습니다.</div>
     </div>
   );
 }
 
 /* ───────── 스타일 ───────── */
 const sx = {
-  // 좌우는 꽉 차게, 가로 스크롤 차단
   page: {
-    padding: "16px 0",
+    // ▶ 좌우 여백 확보 + 클리핑 해제: 오른쪽 그림자/모서리 보이게
+    padding: "0 12px 40px",
     background: "#f5f7f8",
     minHeight: "100vh",
     boxSizing: "border-box",
-    overflowX: "hidden",
-  },
-
-  /* 상단 안내 카드 */
-  infoCard: {
-    width: "100%",
-    margin: "0 0 12px 0",
-    background: "#fff",
-    border: "1px solid #e5e7eb",
-    borderRadius: 0,
-    padding: "12px 16px",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-    boxSizing: "border-box",
-  },
-  infoTitle: { margin: 0, fontSize: 16, fontWeight: 700, color: "#111827" },
-  infoDesc: { margin: "4px 0 0", fontSize: 13, color: "#475569" },
-
-  /* 히어로 카드 */
-  heroCard: {
-    width: "100%",
-    background: "#fff",
-    borderRadius: 16,
-    boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
-    display: "grid",
-    overflow: "hidden",
-    boxSizing: "border-box",
-  },
-
-  heroLeft: {
-    padding: "20px 20px 20px 24px", // ← 패딩 축소
-    display: "flex",
-    flexDirection: "column",
-  },
-
-  heroRight: { position: "relative", width: "100%", height: "100%" },
-  illustration: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    display: "block",
-  },
-
-  // 타이틀/서브타이틀 + 구분선 (컴팩트)
-  title: { margin: 0, marginBottom: 6, fontSize: 24, fontWeight: 800, color: "#0f172a" },
-  subtitle: { margin: "6px 0 12px", fontSize: 14, color: "#475569" },
-  hr: { height: 1, background: "#e5e7eb", margin: "10px 0 12px" },
-
-  formCol: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 0,
+    overflow: "visible",
     maxWidth: "100%",
-    width: "100%",
+    margin: 0,
+    paddingTop: "0px",
   },
+
+  /* 상단 안내 카드: 대칭 그림자로 통일 */
+  infoCard: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "24px",
+    background: "#fff",
+    borderRadius: 8,
+    boxShadow: "0 2px 8px rgba(0,0,0,.10)", // ← 왼쪽 강조 제거, 대칭
+    width: "100%",                          // ← 95% → 100%
+    margin: "-2px 0 20px -9px",                 // 좌우 여백은 page 패딩으로
+    boxSizing: "border-box",
+  },
+
+  infoInner: { display: "flex", flexDirection: "column" },
+  titleRow: { display: "flex", alignItems: "center", gap: 10, marginBottom: 40 },
+  infoIcon: { width: 28, height: 28, objectFit: "contain", display: "block" },
+  infoTitle: { margin: 0, fontSize: 22, fontWeight: "bold", lineHeight: "28px", color: "#111827" },
+  infoDesc: { margin: 0, marginBottom: 15, fontSize: 16, color: "#6B7280", fontWeight: 400, lineHeight: "24px" },
+
+  /* 기간 선택 카드: 대칭 그림자 + 오른쪽 라운드 보강 */
+  heroCard: {
+    width: "100%",                           // ← 95% → 100%
+    background: "#fff",
+    borderRadius: 8,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.06)", // ← 왼쪽 강조 제거, 대칭
+    display: "grid",
+    overflow: "hidden",                       // 내부 콘텐츠(이미지) 클리핑
+    boxSizing: "border-box",
+    margin: "40px 0 20px -9px",
+  },
+  heroLeft: { padding: "22px 22px 22px 26px", display: "flex", flexDirection: "column" },
+  heroRight: { position: "relative", width: "100%", height: "100%" },
+  illustration: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
+
+  title: { margin: 0, marginBottom: 8, fontSize: 20, fontWeight: 600, color: "#0f172a" },
+  subtitle: { margin: "4px 0 12px", fontSize: 14, color: "#475569" },
+  hr: { height: 1, background: "#e5e7eb", margin: "10px 0 14px" },
+
+  formCol: { display: "flex", flexDirection: "column", gap: 0, maxWidth: "100%", width: "100%" },
   label: { fontSize: 12, color: "#475569", marginBottom: 4 },
 
   inputWrap: {
     position: "relative",
     display: "flex",
     alignItems: "center",
-    height: 44,                 // ← 48 → 44
+    height: 44,
     borderRadius: 10,
     border: "1px solid #e5e7eb",
     background: "#fff",
     padding: "0 44px",
     marginTop: 4,
-    marginBottom: 6,
+    marginBottom: 8,
     width: "85%",
   },
-  input: {
-    width: "100%",
-    height: "100%",
-    border: "none",
-    outline: "none",
-    fontSize: 16,
-    color: "#111827",
-    background: "transparent",
-  },
+  input: { width: "100%", height: "100%", border: "none", outline: "none", fontSize: 16, color: "#111827", background: "transparent" },
   leadingIcon: { position: "absolute", left: 12, fontSize: 18, opacity: 0.9 },
   trailingCaret: { position: "absolute", right: 12, fontSize: 16, opacity: 0.5, transform: "translateY(-1px)" },
 
   primaryBtn: {
-    marginTop: 10,
-    height: 52,                // ← 56 → 52
+    marginTop: 70,
+    height: 50,
     borderRadius: 12,
     border: "none",
     background: "linear-gradient(180deg, #068729 0%, #068729 100%)",
     color: "#fff",
-    fontSize: 20,
-    fontWeight: 800,
+    fontSize: 16,
+    fontWeight: 500,
     cursor: "pointer",
     boxShadow: "0 8px 20px rgba(34,197,94,0.18)",
+    width: 180,
   },
 
-  // 숨김(틀 유지)
   filtersHidden: {
     display: "grid",
     gridTemplateColumns: "repeat(5, minmax(0,1fr))",

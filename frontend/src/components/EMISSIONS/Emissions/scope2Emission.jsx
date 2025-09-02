@@ -6,7 +6,13 @@ import Graph4 from "./graph/scope2/graph4";
 
 const toNum = (v) => (v == null ? 0 : Number(v) || 0);
 
-export default function Scope2Emission({ summary, compare, useCompare, trend }) {
+export default function Scope2Emission({
+  summary,
+  compare,
+  useCompare,
+  trend,
+  ratio,       // ✅ emissions.jsx에서 내려준 ratio 사용
+}) {
   const items =
     compare?.items?.map((d) => ({
       name: d.building_name,
@@ -19,11 +25,18 @@ export default function Scope2Emission({ summary, compare, useCompare, trend }) 
       value: toNum(trend.series?.periodic_total?.[i]),
     })) || [];
 
+  // ✅ 도넛용 값: ratio 우선, 없으면 summary 폴백
+  const s1 = toNum(ratio?.scope1_kg ?? summary?.scope1_total_kg ?? 0);
+  const s2 = toNum(ratio?.scope2_kg ?? summary?.scope2_total_kg);
+
   return (
     <div style={wrap}>
       <Graph1 items={items} />
-      <Graph2 orgTotal={toNum(useCompare?.building?.intensity)} usageAvg={toNum(useCompare?.category_avg?.intensity)} />
-      <Graph3 scope1={0} scope2={toNum(summary?.scope2_total_kg)} />
+      <Graph2
+        orgTotal={toNum(useCompare?.building?.intensity)}
+        usageAvg={toNum(useCompare?.category_avg?.intensity)}
+      />
+      <Graph3 scope1={s1} scope2={s2} title="SCOPE 비율" />
       <div style={{ gridColumn: "1 / -1" }}>
         <Graph4 series={series} unitLabel="kgCO2eq" />
       </div>

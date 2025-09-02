@@ -1,7 +1,8 @@
+// src/components/REGISTER/registerPage.jsx
 // "건물 등록 및 관리" 전체 페이지 컨트롤
 
-import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';   // ✅ 추가
+import React, { useEffect, useLayoutEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Sidebar from '../../ALL/Sidebar/sidebar';
 
 import Building from './buildingForm';
@@ -11,13 +12,28 @@ import ManageActivities from '../Input/manage';
 
 const RegisterPage = () => {
   const [activePage, setActivePage] = useState('building');
-  const [searchParams] = useSearchParams();           // ✅ 추가
+  const [searchParams] = useSearchParams();
 
-  // ✅ URL ?sub=... 값이 있으면 탭 반영
+  // 1) 페이지가 마운트될 때 항상 최상단으로
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  // 2) URL 의 ?sub=... 값 반영 + 스크롤도 최상단으로
   useEffect(() => {
-    const sub = searchParams.get('sub');              // building | input | fuel | tier ...
-    if (sub) setActivePage(sub);
-  }, [searchParams]);
+    const sub = searchParams.get('sub'); // building | input | fuel | tier ...
+    if (sub && sub !== activePage) {
+      setActivePage(sub);
+      // 상태 반영 직후 프레임에서 스크롤 올리기
+      requestAnimationFrame(() => window.scrollTo(0, 0));
+    }
+  }, [searchParams, activePage]);
+
+  // 3) 사이드바에서 탭을 바꿀 때도 항상 최상단으로
+  const handleSetActivePage = useCallback((key) => {
+    setActivePage(key);
+    requestAnimationFrame(() => window.scrollTo(0, 0));
+  }, []);
 
   const renderPage = () => {
     switch (activePage) {
@@ -36,7 +52,8 @@ const RegisterPage = () => {
 
   return (
     <div style={styles.container}>
-      <Sidebar activePage={activePage} setActivePage={setActivePage} />
+      {/* setActivePage 대신 handleSetActivePage 전달 */}
+      <Sidebar activePage={activePage} setActivePage={handleSetActivePage} />
       <div style={styles.main}>{renderPage()}</div>
     </div>
   );

@@ -17,13 +17,11 @@ urlpatterns = [
     path('api/', include('buildings.urls')),
     path("api/activities/", include("activities.urls")), 
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-ui'),
-    path('chatbot/', include('chatbot.urls')),
+    
+    # --- [수정됨] ---
+    # 챗봇 API의 경로를 다른 API들과 동일하게 /api/ 하위로 변경합니다.
+    path('api/chatbot/', include('chatbot.urls')),
+    
     path('api/', include('emissions.urls')), 
     path('api/reports/', include('reports.urls')),
-
-    # 위에서 정의한 모든 URL을 제외한 나머지 모든 경로를 React 앱으로 연결합니다.
-    # 이 규칙이 반드시 맨 마지막에 와야 합니다!
-    re_path(r'^.*$', index, name='index'),    
 ]
-
-

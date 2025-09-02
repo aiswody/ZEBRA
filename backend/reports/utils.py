@@ -15,7 +15,7 @@ def _env():
     env.filters["comma"] = lambda v: f"{float(v):,}" if v is not None else ""
     return env
 
-def render_docx(context: dict, template_rel_path="reports/templates/docx/report_template.docx"):
+def render_docx(context: dict, template_rel_path="reports/templates/report_template.docx"):
     tpl_path = Path(settings.BASE_DIR) / template_rel_path
     tpl = DocxTemplate(str(tpl_path))
     tpl.render(context, _env())

@@ -12,7 +12,7 @@ const InfoBubble = () => {
       <div style={styles.row}>
         <span style={styles.pinEmoji}>📌</span>
         <div>
-          Tier 2 이상(2, 3) 선택 시, ‘IPCC 가이드라인’, ‘환경부 지침’, 및 ‘ISO 14064-1’ 기준에 따라
+          Tier 2 이상(2, 3) 선택 시, ‘IPCC 가이드라인’, ‘환경부 지침’, 및 ‘ISO 14064-1’ 기준에 따라<br />
           사용자가 직접 측정하거나 자체 산정한 <strong>발열량</strong>, <strong>산화율</strong>, <strong>열량 등의 계수</strong>를 입력해야 합니다.
         </div>
       </div>
@@ -22,8 +22,9 @@ const InfoBubble = () => {
 
 const styles = {
   bubble: {
-    marginTop: '50px',
-    maxWidth: 700,
+    marginTop: '55px',
+    marginLeft: 10,
+    maxWidth: 900,
     width: '100%',
     borderRadius: 12,
     border: '1px solid #d1fae5',

@@ -1,6 +1,5 @@
-// src/App.js
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 
 import Topbar from './components/ALL/Topbar/topbar.jsx';
 import Navbar from './components/ALL/Navbar/navbar.jsx';
@@ -10,16 +9,18 @@ import SignUpPage from './components/SIGNUP/SignUpPage';
 import RegisterPage from './components/REGISTER/Building/buildingRegister';
 import NoticePage from './components/NOTICE/Notice/notice.jsx';
 import EmissionPage from './components/EMISSIONS/emissions.jsx';
-import Chatbot from './components/ALL/Chatbot/chatbot.jsx';
+// [수정됨] 기존 chatbot.jsx 대신 새로 만든 Chatbot2yo.js를 import 합니다.
+import Chatbot2yo from './components/ALL/Chatbot/Chatbot2yo.js';
 
-// ✅ 추가: 인트로 3단계 페이지
+// 인트로 3단계 페이지
 import First from './components/INTRO/Introdution/first.jsx';
 import Second from './components/INTRO/Introdution/second.jsx';
 import Third from './components/INTRO/Introdution/third.jsx';
 
-// ✅ 추가: 인증 컨텍스트 & 보호 라우트
+// 인증 컨텍스트 & 보호 라우트
 import { AuthProvider } from './contexts/authContext';
 import PrivateRoute from './routes/privateRoute';
+
 
 function App() {
   return (
@@ -36,15 +37,6 @@ function App() {
           <Route path="/third" element={<Third />} />
           <Route path="/notice" element={<NoticePage />} />
           
-          {/* --- [수정됨] --- */}
-          {/* 챗봇 페이지를 아래 보호 페이지 섹션으로 이동시켰습니다. */}
-
-
-          {/* 인트로 전환 페이지 */}
-          <Route path="/first" element={<First />} />
-          <Route path="/second" element={<Second />} />
-          <Route path="/third" element={<Third />} />
-
           {/* 보호 페이지 (로그인 필요) */}
           <Route
             path="/register"
@@ -69,7 +61,7 @@ function App() {
             path="/chatbot"
             element={
               <PrivateRoute>
-                <Chatbot />
+                <Chatbot2yo />
               </PrivateRoute>
             }
           />
@@ -83,3 +75,6 @@ function App() {
 }
 
 export default App;
+
+
+

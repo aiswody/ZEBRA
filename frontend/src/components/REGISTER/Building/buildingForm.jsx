@@ -2,6 +2,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../../contexts/authContext';
 import { api } from '../../../api/client';
+import logoDeungrok from '../../../assets/logo_deungrok.png';
+import logoPlus from '../../../assets/logo_plus.png';
 
 /** ─────────── 설정 ─────────── */
 const BUILDINGS_API = '/buildings/';
@@ -231,7 +233,16 @@ const Building = () => {
     <div style={styles.pageGrid}>
       {/* 좌측 폼 */}
       <div style={styles.container}>
-        <h2 style={styles.title}>🏛 건물 등록</h2>
+        {/* 아이콘 + 텍스트 제목 */}
+        <div style={styles.titleRow}>
+          <img
+            src={logoDeungrok}
+            alt=""
+            style={styles.titleIcon}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+          <h2 style={styles.titleText}>건물 등록</h2>
+        </div>
 
         {/* 기관명 표시 */}
         <div style={styles.section}>
@@ -246,16 +257,12 @@ const Building = () => {
               whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
             }}
           />
-        {/* ── 구분선 ── */}
+          {/* ── 구분선 ── */}
           <div style={{ ...styles.divider, marginTop: '30px' }} aria-hidden="true" />
-
         </div>
-
 
         {/* ↓↓↓ 등록명 이후 전체 묶음을 아래로 내림 ↓↓↓ */}
         <div style={{ marginTop: '35px' }}>
-          
-
           {/* 키워드 검색 + 제안 */}
           <div style={{ ...styles.section, position:'relative' }}>
             <label>지도 위치 검색</label>
@@ -315,19 +322,25 @@ const Building = () => {
       {/* 우측: 건물 목록 */}
       <aside style={styles.rightPanel} aria-label="건물 목록">
         <div style={styles.panelHeader}>
-          <div style={{ fontWeight: 'bold', fontSize: '22px', marginBottom: '10px' }}>
-            건물 목록
-          </div>
-          <small style={{
-            color: '#6b7280',
-            display: 'block',
-            marginBottom: '25px',
-            fontSize: '16px',
-            fontWeight: 600
-          }}>
-            {insName ? `기관 : ${insName}` : '기관명을 확인하세요'}
-          </small>
-        </div>
+  <div style={{ display:'flex', alignItems:'center', gap:8, fontWeight:'bold', fontSize:'22px', marginBottom:'10px' }}>
+    <img
+      src={logoPlus}
+      alt=""
+      style={{ width:22, height:22, objectFit:'contain' }}
+      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+    />
+    <span>건물 목록</span>
+  </div>
+  <small style={{
+    color: '#6b7280',
+    display: 'block',
+    marginBottom: '25px',
+    fontSize: '16px',
+    fontWeight: 600
+  }}>
+    {insName ? `${insName}` : '기관명을 확인하세요'}
+  </small>
+</div>
 
         <div style={styles.listBox} role="list">
           {isLoading && <div style={styles.status}>불러오는 중…</div>}
@@ -377,7 +390,32 @@ const Building = () => {
 const styles = {
   pageGrid: { display:'grid', gridTemplateColumns:'2fr 1.2fr', gap:'16px', alignItems:'start', marginTop:'32px' },
   container: { background:'#fff', padding:'24px', borderRadius:'8px', boxShadow:'0 2px 8px rgba(0,0,0,.1)' },
+
+  // 아이콘 + 텍스트 제목(건물 등록)
+  titleRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: '24px',
+    minHeight: 28
+  },
+  titleIcon: {
+    width: 28,
+    height: 28,
+    objectFit: 'contain',
+    display: 'block'
+  },
+  titleText: {
+    fontSize: '22px',
+    fontWeight: 'bold',
+    margin: 0,
+    lineHeight: '28px',
+    color: '#111827'
+  },
+
+  // (기존 title은 미사용이지만 남겨둠 — 필요 없으면 제거 가능)
   title: { marginBottom:'24px', fontSize:'22px', fontWeight:'bold' },
+
   section: { marginBottom:'20px' },
   input: { padding:'8px 12px', fontSize:'14px', width:'100%', maxWidth:'95%', borderRadius:'4px', border:'1px solid #ccc', marginTop:'8px' },
   divider: { height:1, background:'#e5e7eb', margin:'20px 0' },
@@ -394,15 +432,24 @@ const styles = {
   tag: { background:'#f0f4f3', border:'1px solid #ccc', padding:'8px 12px', borderRadius:'16px', cursor:'pointer' },
   selectedTag: { background:'#14532d', opacity: "85%", color:'#fff', border:'1px solid #14532d', fontWeight:'bold' },
 
-  registerButton: {
-    marginTop:40, background:'#00512D', opacity: "85%", color:'#fff', border:'none', padding:'10px 16px',
-    borderRadius:'4px', fontWeight:'bold', cursor:'pointer'
-  },
+registerButton: {
+  marginTop: 70,
+  height: 50,
+  minWidth: 200,
+  borderRadius: 12,
+  border: "none",
+  background: "linear-gradient(180deg, #068729 0%, #068729 100%)",
+  color: "#fff",
+  fontSize: 16,
+  fontWeight: 500,
+  cursor: "pointer",
+  boxShadow: "0 8px 20px rgba(34,197,94,0.18)",
+},
 
   // 오른쪽 카드 왼쪽 여백 넉넉히
   rightPanel: {
     background:'#fff',
-    padding:'40px 20px 20px 23px', // top, right, bottom, left
+    padding:'24px', // top, right, bottom, left
     borderRadius:'8px',
     boxShadow:'0 2px 8px rgba(0,0,0,.1)'
   },

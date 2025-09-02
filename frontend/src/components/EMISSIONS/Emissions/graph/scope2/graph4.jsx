@@ -12,38 +12,41 @@ import {
 const TITLE_STYLE = { fontSize: 14, color: "#4B5563", margin: 0, marginBottom: 8 };
 
 export default function Graph4({
-  series,
-  unitLabel = "배출량 [단위]",
+  series,                  // [{date:'YYYY-MM' 또는 'YYYY', value:number}, ...] (scope2 총배출: 전력)
+  unitLabel = "kgCO₂e",
 }) {
-  const fallback = useMemo(
-    () =>
-      [22, 40, 55, 63, 66, 54, 68, 56, 90, 95, 84, 58].map((v, i) => ({
-        date: `2024-${String(i + 1).padStart(2, "0")}`,
-        value: v,
-      })),
+  // 비교용 더미 연도(원하면 값만 조정하세요)
+  const dummyYears = useMemo(
+    () => ({ 
+      2021: 528431.211,
+      2022: 458020.741, 
+      2023: 472008.507, 
+      2024: 425082.392 }),
     []
   );
-  const source = series?.length ? series : fallback;
 
-  const [granularity, setGranularity] = useState("month");
-  const [showPeriodic, setShowPeriodic] = useState(true);
-  const [showCumulative, setShowCumulative] = useState(false);
-
-  const monthlyData = useMemo(() => {
-    let cum = 0;
-    return source.map((d) => {
-      cum += Number(d.value) || 0;
-      const [, m] = d.date.split("-");
-      return { x: `${Number(m) || 1}월`, periodic: Number(d.value) || 0, cumulative: cum };
-    });
-  }, [source]);
-
+  // 입력 series → 연도 합계로 집계 + 필요 시 더미 병합
   const yearlyData = useMemo(() => {
     const byYear = new Map();
-    source.forEach((d) => {
-      const [y] = d.date.split("-");
-      byYear.set(y, (byYear.get(y) || 0) + (Number(d.value) || 0));
-    });
+
+    if (Array.isArray(series) && series.length > 0) {
+      series.forEach((d) => {
+        const yFromDate = typeof d.date === "string" ? d.date.slice(0, 4) : "";
+        const y = String(d.year ?? yFromDate).replace(/\D/g, "");
+        const v = Number(d.value) || 0;
+        if (!y) return;
+        byYear.set(y, (byYear.get(y) || 0) + v);
+      });
+    }
+
+    // 실데이터 연도가 1개 이하이면 더미 주입
+    if (byYear.size <= 1) {
+      Object.entries(dummyYears).forEach(([y, v]) => {
+        if (!byYear.has(y)) byYear.set(y, Number(v) || 0);
+      });
+    }
+
+    // 정렬 + 누적
     let cum = 0;
     return Array.from(byYear.entries())
       .sort(([a], [b]) => (a > b ? 1 : -1))
@@ -51,17 +54,27 @@ export default function Graph4({
         cum += sum;
         return { x: `${y}년`, periodic: sum, cumulative: cum };
       });
-  }, [source]);
+  }, [series, dummyYears]);
 
-  const data = granularity === "month" ? monthlyData : yearlyData;
-  const yMax = useMemo(
-    () => Math.max(...data.map((d) => Math.max(d.periodic ?? 0, d.cumulative ?? 0)), 0) * 1.1,
-    [data]
-  );
+  const data = yearlyData;
+
+  const [showPeriodic, setShowPeriodic] = useState(true);
+  const [showCumulative, setShowCumulative] = useState(false);
+
+  const yMax = useMemo(() => {
+    return (
+      Math.max(
+        ...data.map((d) =>
+          Math.max(showPeriodic ? d.periodic ?? 0 : 0, showCumulative ? d.cumulative ?? 0 : 0)
+        ),
+        0
+      ) * 1.1
+    );
+  }, [data, showPeriodic, showCumulative]);
 
   return (
     <div style={card}>
-      <p style={TITLE_STYLE}>연도별 탄소 배출</p>
+      <p style={TITLE_STYLE}>연도별 탄소 배출 (Scope 2)</p>
 
       <div style={layout}>
         <div style={{ width: "100%" }}>
@@ -73,9 +86,16 @@ export default function Graph4({
                 <YAxis
                   domain={[0, yMax]}
                   tick={{ fill: "#6B7280" }}
-                  label={{ value: unitLabel, angle: -90, position: "insideLeft", dy: 40, fill: "#6B7280", fontSize: 12 }}
+                  label={{
+                    value: `배출량 [${unitLabel}]`,
+                    angle: -90,
+                    position: "insideLeft",
+                    dy: 40,
+                    fill: "#6B7280",
+                    fontSize: 12,
+                  }}
                 />
-                <Tooltip formatter={(v) => v.toLocaleString()} />
+                <Tooltip formatter={(v) => Number(v).toLocaleString()} />
 
                 {showPeriodic && (
                   <Line
@@ -108,27 +128,26 @@ export default function Graph4({
           <div style={ctlTitle}>그래프 형태</div>
 
           <label style={chk}>
-            <input type="checkbox" checked={showPeriodic} onChange={(e) => setShowPeriodic(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={showPeriodic}
+              onChange={(e) => setShowPeriodic(e.target.checked)}
+            />
             <span style={chipDark} />
             시기별
           </label>
 
           <label style={chk}>
-            <input type="checkbox" checked={showCumulative} onChange={(e) => setShowCumulative(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={showCumulative}
+              onChange={(e) => setShowCumulative(e.target.checked)}
+            />
             <span style={chipLight} />
             누적
           </label>
 
-          <div style={divider} />
-
-          <label style={radio}>
-            <input type="radio" name="gran2" value="month" checked={granularity === "month"} onChange={() => setGranularity("month")} />
-            개월
-          </label>
-          <label style={radio}>
-            <input type="radio" name="gran2" value="year" checked={granularity === "year"} onChange={() => setGranularity("year")} />
-            연
-          </label>
+          {/* 월/연 라디오는 제거됨 (연도 비교 전용) */}
         </div>
       </div>
     </div>
@@ -140,7 +159,6 @@ const layout = { display: "grid", gridTemplateColumns: "1fr 220px", gap: 12, ali
 const controls = { border: "1px solid #E5E7EB", borderRadius: 12, padding: 12, display: "flex", flexDirection: "column", gap: 10 };
 const ctlTitle = { fontSize: 14, fontWeight: 700, color: "#374151", marginBottom: 6 };
 const chk = { display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#374151" };
-const radio = { display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#374151" };
 const divider = { height: 1, background: "#E5E7EB", margin: "6px 0" };
 const chipDark = { width: 12, height: 12, borderRadius: 2, background: "#14532d", display: "inline-block" };
 const chipLight = { width: 12, height: 12, borderRadius: 2, background: "#bfe8d7", display: "inline-block" };

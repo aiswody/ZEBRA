@@ -1,27 +1,39 @@
+// components/EMISSIONS/Emissions/graph/graph2.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
-  CartesianGrid, Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Cell,
 } from "recharts";
 
 /**
- * 용도별 비교 그래프
- * - buildingId가 주어지면 API 모드(벤치마크 사용)
- * - buildingId가 없으면 부모가 넘긴 숫자로 수동 모드
+ * 모드별 동작
+ * - { mode:"direct", orgTotal, usageAvg } : useCompare 값 그대로 사용
+ * - { mode:"api", buildingId, year, scope } : /use-compare API 호출
+ * - { mode:"fallback", buildingTotal, usageAvgTotal } : 부모 합계 사용
  */
-export default function Graph2({
-  // API 모드(우선)
-  buildingId,
-  year,
-  scope = "total",
+export default function Graph2(props) {
+  const {
+    mode = "direct",
+    // direct
+    orgTotal,
+    usageAvg,
+    // api
+    buildingId,
+    year,
+    scope = "total",
+    // fallback
+    buildingTotal,
+    usageAvgTotal,
+    title = "용도별 배출량",
+  } = props;
 
-  // 수동 모드 값
-  buildingTotal,
-  usageAvgTotal,
-
-  title = "용도별 배출량(면적당 합)",
-}) {
   const [buildingVal, setBuildingVal] = useState(0);
   const [avgVal, setAvgVal] = useState(0);
   const [unit, setUnit] = useState("kgCO2eq/m2");
@@ -33,9 +45,19 @@ export default function Graph2({
     return buildingId ? `/api/dashboard/buildings/${buildingId}/${s}/use-compare` : null;
   }, [buildingId, scope]);
 
-  // ─ API 모드
+  // direct 모드: props를 그대로 반영
   useEffect(() => {
-    if (!endpoint) return;
+    if (mode !== "direct") return;
+    setErr("");
+    setLoading(false);
+    setUnit("kgCO2eq/m2");
+    setBuildingVal(Number(orgTotal ?? 0));
+    setAvgVal(Number(usageAvg ?? 0));
+  }, [mode, orgTotal, usageAvg]);
+
+  // api 모드: 서버에서 intensity 받아서 반영
+  useEffect(() => {
+    if (mode !== "api" || !endpoint) return;
     let alive = true;
     (async () => {
       try {
@@ -45,7 +67,7 @@ export default function Graph2({
         if (!alive) return;
         setUnit(data?.building?.unit || "kgCO2eq/m2");
         setBuildingVal(Number(data?.building?.intensity ?? 0));
-        setAvgVal(Number(data?.category_avg?.intensity ?? 0)); // use_intensity의 벤치마크
+        setAvgVal(Number(data?.category_avg?.intensity ?? 0));
       } catch {
         if (!alive) return;
         setErr("데이터를 불러오지 못했습니다.");
@@ -55,17 +77,20 @@ export default function Graph2({
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
-  }, [endpoint, year]);
+    return () => {
+      alive = false;
+    };
+  }, [mode, endpoint, year]);
 
-  // ─ 수동 모드 (id가 없을 때)
+  // fallback 모드: 합계 사용
   useEffect(() => {
-    if (buildingId) return; // API 모드면 무시
+    if (mode !== "fallback") return;
     setErr("");
+    setLoading(false);
     setUnit("kgCO2eq/m2");
     setBuildingVal(Number(buildingTotal ?? 0));
     setAvgVal(Number(usageAvgTotal ?? 0));
-  }, [buildingId, buildingTotal, usageAvgTotal]);
+  }, [mode, buildingTotal, usageAvgTotal]);
 
   const data = [
     { name: "해당 건물", value: buildingVal || 0, fill: "#16a34a" },
@@ -73,9 +98,7 @@ export default function Graph2({
   ];
 
   const formatNumber = (v) =>
-    typeof v === "number"
-      ? (Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(3))
-      : v;
+    typeof v === "number" ? (Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(3)) : v;
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -98,7 +121,7 @@ export default function Graph2({
       <div style={headerRow}>
         <p style={titleStyle}>{title}</p>
         <small style={unitStyle}>
-          단위: <b>{unit}</b>{scope !== "total" ? ` · ${scope.toUpperCase()}` : ""}
+          단위: <b>{unit}</b>
         </small>
       </div>
 
@@ -113,7 +136,9 @@ export default function Graph2({
               <YAxis dataKey="name" type="category" width={120} tick={{ fill: "#374151", fontWeight: 700 }} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="value" barSize={35} radius={[3, 3, 3, 3]}>
-                {data.map((entry, idx) => (<Cell key={`cell-${idx}`} fill={entry.fill} />))}
+                {data.map((entry, idx) => (
+                  <Cell key={`cell-${idx}`} fill={entry.fill} />
+                ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>

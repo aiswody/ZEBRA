@@ -1,66 +1,94 @@
-# backend/chatbot/views.py
-
-import json
 import os
-from django.http import JsonResponse
-from django.core.exceptions import ObjectDoesNotExist
+import json
+from openai import OpenAI
 
-# --- [수정됨] ---
-# rest_framework의 데코레이터와 인증 클래스를 import 합니다.
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework import status
+from django.db.models import Subquery, OuterRef
 
-from accounts.models import Account
 from buildings.models import Building
 from emissions.models import EmissionAgg
-from .services import get_deepseek_recommendation, AIConnectionError
+from .serializers import ChatbotBuildingDataSerializer
 
-# --- [수정됨] ---
-# @login_required 대신, 다른 API들과 동일한 JWT 인증 방식을 사용하도록 변경합니다.
-@api_view(['POST'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAuthenticated])
-def get_recommendation_api(request):
+def run_deepseek_analysis(building_data):
     """
-    로그인된 사용자의 기관 데이터를 기반으로
-    AI 모델에게 온실가스 감축 방안을 요청하고 응답을 반환하는 API 뷰
+    Hugging Face Inference API를 통해 DeepSeek 모델을 호출하여 분석을 수행합니다.
     """
+    api_key = os.getenv("HF_TOKEN")
+    if not api_key:
+        return "<p>서버에 Hugging Face API 키(HF_TOKEN)가 설정되지 않았습니다. 관리자에게 문의하세요.</p>"
+
     try:
-        # 이제 request.user는 JWT 토큰을 통해 인증된 사용자입니다.
-        institution = request.user.account.institution
-        buildings = Building.objects.filter(institution=institution, is_archived=False)
+        client = OpenAI(
+            base_url="https://router.huggingface.co/v1",
+            api_key=api_key,
+        )
+
+        formatted_data = json.dumps(building_data, indent=2, ensure_ascii=False)
         
-        if not buildings.exists():
-            return JsonResponse({'error': '기관에 등록된 건물이 없습니다. 먼저 데이터를 등록해주세요.'}, status=404)
+        system_prompt = """
+        당신은 건물의 온실가스(GHG) 배출량 데이터 분석 전문가입니다.
+        사용자가 제공한 건물 목록 데이터를 분석하여, 단위 면적(m²)당 온실가스 배출량이 가장 높은 건물을 찾아주세요.
+        그 다음, 해당 건물의 배출량을 줄이기 위한 구체적이고 실천 가능한 방안 3가지를 제안해주세요.
+        답변은 반드시 HTML 형식으로 생성해야 하며, 주요 키워드는 <strong> 태그로 강조해주세요.
+        """
+        user_prompt = f"""
+        아래는 우리 기관이 소유한 건물들의 최신 데이터입니다.
+        이 데이터를 분석하여 온실가스 배출을 줄이기 위한 방안을 추천해주세요.
 
-        building_data_for_prompt = []
-        for building in buildings:
-            building_info = {
-                'name': building.name,
-                'usage': building.get_usage_display(),
-                'address': building.address,
-                'emissions': None
-            }
-            latest_emission = EmissionAgg.objects.filter(building=building).order_by('-year').first()
-            if latest_emission:
-                building_info['emissions'] = {
-                    'year': latest_emission.year,
-                    'total_emissions_kg': float(latest_emission.total_kg),
-                    'scope1_emissions_kg': float(latest_emission.scope1_total_kg),
-                    'scope2_electricity_emissions_kg': float(latest_emission.scope2_elec_kg),
-                    'emissions_per_area_kg_m2': float(latest_emission.i_total)
-                }
-            building_data_for_prompt.append(building_info)
+        [건물 데이터]
+        {formatted_data}
+        """
 
-        recommendation = get_deepseek_recommendation(institution, building_data_for_prompt)
+        completion = client.chat.completions.create(
+            model="deepseek-ai/DeepSeek-V3.1:fireworks-ai",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
         
-        return JsonResponse({'recommendation': recommendation})
+        content = completion.choices[0].message.content
+        return content
 
-    except Account.DoesNotExist:
-        return JsonResponse({'error': '사용자 계정 프로필을 찾을 수 없습니다.'}, status=404)
-    except AIConnectionError as e:
-        return JsonResponse({'error': str(e)}, status=500)
     except Exception as e:
-        print(f"Error in get_recommendation_api: {e}") 
-        return JsonResponse({'error': f'서버 내부 오류가 발생했습니다: {str(e)}'}, status=500)
+        print(f"Hugging Face API 호출 오류: {e}")
+        return f"<p>AI 모델을 호출하는 중 오류가 발생했습니다. (오류: {e})</p>"
+
+
+class UserBuildingsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            institution = request.user.account.institution
+        except AttributeError:
+            return Response({"error": "사용자 계정에 연결된 기관 정보가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+
+        latest_year_subquery = EmissionAgg.objects.filter(building=OuterRef('pk')).order_by('-year').values('year')[:1]
+        latest_emissions_subquery = EmissionAgg.objects.filter(building=OuterRef('pk'), year=Subquery(latest_year_subquery)).values('total_kg')[:1]
+        latest_area_subquery = EmissionAgg.objects.filter(building=OuterRef('pk'), year=Subquery(latest_year_subquery)).values('area_m2')[:1]
+
+        buildings_with_latest_data = Building.objects.filter(
+            institution=institution, is_archived=False
+        ).annotate(
+            latest_emissions_kg=Subquery(latest_emissions_subquery),
+            latest_area_m2=Subquery(latest_area_subquery)
+        ).filter(latest_emissions_kg__isnull=False)
+
+        serializer = ChatbotBuildingDataSerializer(buildings_with_latest_data, many=True)
+        return Response(serializer.data, status=status.HTTP_OK)
+
+
+class AIAnalysisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        building_data = request.data.get('buildings')
+        if not building_data:
+            return Response({'error': '건물 데이터가 필요합니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        recommendation = run_deepseek_analysis(building_data)
+        return Response({'recommendation': recommendation}, status=status.HTTP_200_OK)
