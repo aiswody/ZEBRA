@@ -64,6 +64,7 @@ const Input = () => {
       if (!activeBuildingId) return;
       try {
         const d = await fetchDetail(activeBuildingId, year);
+        if (!mounted) return;
 
         const toTierInit = (cat) => {
           if (!cat) return null;
@@ -303,7 +304,6 @@ const styles = {
     background: '#e5e7eb',
     margin: '12px 0',
     marginTop : 10,
-    width: 'calc(100% + 28px)', // 좌 -14 보정 * 2
     marginLeft: -16,
     width: '99%',
   },

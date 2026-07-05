@@ -39,7 +39,7 @@ const Navbar = () => {
                 to={it.to}
                 style={({ isActive }) => ({
                   ...styles.menuLink,
-                  ...(isActive ? styles.menuLinkActive : {}),
+                  ...((isActive || (it.isIntroGroup && isIntroActive)) ? styles.menuLinkActive : {}),
                 })}
               >
                 {it.label}
