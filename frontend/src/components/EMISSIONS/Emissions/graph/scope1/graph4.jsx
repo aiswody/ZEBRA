@@ -160,6 +160,5 @@ const layout = { display: "grid", gridTemplateColumns: "1fr 220px", gap: 12, ali
 const controls = { border: "1px solid #E5E7EB", borderRadius: 12, padding: 12, display: "flex", flexDirection: "column", gap: 10 };
 const ctlTitle = { fontSize: 14, fontWeight: 700, color: "#374151", marginBottom: 6 };
 const chk = { display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#374151" };
-const divider = { height: 1, background: "#E5E7EB", margin: "6px 0" };
 const chipDark = { width: 12, height: 12, borderRadius: 2, background: "#14532d", display: "inline-block" };
 const chipLight = { width: 12, height: 12, borderRadius: 2, background: "#a7f3d0", display: "inline-block" };

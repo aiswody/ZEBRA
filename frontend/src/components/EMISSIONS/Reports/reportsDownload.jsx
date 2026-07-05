@@ -9,12 +9,8 @@ export default function ReportsDownload() {
   const [yearRange, setYearRange] = useState({ from: "", to: "" });
 
   // 내정보 기반 기관 정보
-  const [orgId, setOrgId] = useState(null);
   const [orgName, setOrgName] = useState("");
   const [loadingMe, setLoadingMe] = useState(true);
-
-  // (필요 시 사용) 건물 ID
-  const [buildingId, setBuildingId] = useState(null);
 
   // 낮은 화면 최적화
   const [isShort, setIsShort] = useState(false);
@@ -37,14 +33,7 @@ export default function ReportsDownload() {
           me?.institutionName ??
           "";
 
-        const id =
-          me?.institution?.id ??
-          me?.institution_id ??
-          me?.institutionId ??
-          null;
-
         setOrgName(name);
-        setOrgId(id);
       } catch (e) {
         console.warn("fetchMe failed", e);
       } finally {

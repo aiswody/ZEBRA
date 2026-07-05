@@ -52,10 +52,6 @@ export default function Row1({
   // ✅ 우선순위: iTotal → total_kg/area_m2 → perArea 합 → 0
   const totalIntensity =
     (fromQuotient ?? fromITotal ?? fromPerArea ?? 0);
-    const source = fromQuotient != null ? "quotient"
-              : fromITotal   != null ? "server"
-              : fromPerArea  != null ? "perArea"
-              : "none";
 
   // ---- 전년 대비(%). 강도는 낮을수록 개선 ----
   const computedYoy =
