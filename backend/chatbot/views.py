@@ -79,7 +79,7 @@ class UserBuildingsView(APIView):
         ).filter(latest_emissions_kg__isnull=False)
 
         serializer = ChatbotBuildingDataSerializer(buildings_with_latest_data, many=True)
-        return Response(serializer.data, status=status.HTTP_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class AIAnalysisView(APIView):
