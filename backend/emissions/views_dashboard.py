@@ -1,5 +1,4 @@
 # emissions/views_dashboard.py
-import logging
 from django.utils import timezone
 from django.db.models import Sum
 from rest_framework.views import APIView
@@ -8,8 +7,6 @@ from rest_framework.permissions import IsAuthenticated  # 권장(미인증 401�
 from .models import EmissionAgg
 from buildings.models import Building  # 올바른 import
 from .use_intensity import USE_INTENSITY, UNIT
-
-log = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────────────────────
 # 용도 표준화/매핑
@@ -136,15 +133,8 @@ class Scope1BuildingsCompareView(APIView):
             qs = EmissionAgg.objects.none()
 
         qs = qs.order_by('-scope1_total_kg' if order != 'asc' else 'scope1_total_kg')
-        total_count = qs.count()
         if limit > 0:
             qs = qs[:limit]
-
-        log.warning(
-            f"[SCOPE1] auth={getattr(req.user,'is_authenticated',False)} "
-            f"user={getattr(req.user,'username',None)} inst_id={getattr(institution,'id',None)} "
-            f"allow_all={allow_all} year={year} qs_total={total_count} returned={qs.count()}"
-        )
 
         items = [{
             "building_id": a.building_id,
@@ -178,15 +168,8 @@ class Scope2BuildingsCompareView(APIView):
             qs = EmissionAgg.objects.none()
 
         qs = qs.order_by('-scope2_elec_kg' if order != 'asc' else 'scope2_elec_kg')
-        total_count = qs.count()
         if limit > 0:
             qs = qs[:limit]
-
-        log.warning(
-            f"[SCOPE2] auth={getattr(req.user,'is_authenticated',False)} "
-            f"user={getattr(req.user,'username',None)} inst_id={getattr(institution,'id',None)} "
-            f"allow_all={allow_all} year={year} qs_total={total_count} returned={qs.count()}"
-        )
 
         items = [{
             "building_id": a.building_id,

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from random import choice
 from typing import Dict, List, Tuple
 
 from django.db.models import Sum, Q
@@ -96,10 +95,11 @@ def _build_emission_results(inst, year: int) -> List[Dict]:
         .filter(building__institution=inst, building__is_archived=False, year=year)
         .values("building_id", "scope1_total_kg", "scope2_elec_kg", "total_kg", "i_total", "area_m2")
     )
+    row_by_building = {r["building_id"]: r for r in rows}
 
     result: List[Dict] = []
     for bid in sorted(bmap.keys(), key=lambda i: bmap[i]):
-        match = next((r for r in rows if r["building_id"] == bid), None)
+        match = row_by_building.get(bid)
         if match:
             s1 = _num(match["scope1_total_kg"])
             s2 = _num(match["scope2_elec_kg"])
@@ -151,7 +151,7 @@ def _build_scalar_block(user, year: int, emission_results: List[Dict], buildings
     )  # kg
 
     if emission_results:
-        ex = choice(emission_results)
+        ex = max(emission_results, key=lambda r: r["total"])
         ex_name, ex_total = ex["name"], ex["total"]  # kg
     else:
         ex_name, ex_total = "-", 0.0
