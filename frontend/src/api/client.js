@@ -1,31 +1,63 @@
 import axios from "axios";
+import { getAccessToken, getRefreshToken, setAccessToken, setRefreshToken, clearTokens } from "./tokenStorage";
 
 const baseURL = process.env.REACT_APP_API_BASE ?? "/api";
 export const api = axios.create({ baseURL });
 
-// --- 요청 인터셉터 (수정 없음) ---
+// --- 요청 인터셉터 ---
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
+  const token = getAccessToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   if (!config.headers.Accept) config.headers.Accept = "application/json";
   return config;
 });
 
-// --- [추가/수정됨] 응답 인터셉터 (글로벌 에러 처리) ---
+// 동시에 여러 요청이 401을 받아도 refresh 호출은 한 번만 하도록 공유
+let refreshPromise = null;
+
+function refreshAccessToken() {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return Promise.reject(new Error("No refresh token"));
+
+  if (!refreshPromise) {
+    // interceptor 재귀 방지를 위해 api 인스턴스가 아닌 별도 axios 호출 사용
+    refreshPromise = axios
+      .post(`${baseURL}/auth/refresh/`, { refresh: refreshToken })
+      .then(({ data }) => {
+        setAccessToken(data.access);
+        if (data.refresh) setRefreshToken(data.refresh);
+        return data.access;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
+// --- 응답 인터셉터: 401 발생 시 refresh 토큰으로 access 토큰 갱신 후 원요청 재시도 ---
 api.interceptors.response.use(
-  // 정상 응답은 그대로 반환
   (response) => response,
-  // 에러가 발생했을 때
-  (error) => {
-    // 💥 이전 코드에서는 아마 이 부분에 window.location.href = '/' 같은 코드가 있었을 겁니다.
-    // 그 코드를 삭제하고, 아래와 같이 에러를 그대로 반환하도록 수정합니다.
-    // 이렇게 해야 PrivateRoute와 authContext가 정상적으로 동작합니다.
+  async (error) => {
+    const { config, response } = error;
+    const isAuthEndpoint = config?.url?.includes("/auth/login") || config?.url?.includes("/auth/refresh");
+
+    if (response?.status === 401 && config && !config._retried && !isAuthEndpoint) {
+      config._retried = true;
+      try {
+        const newAccessToken = await refreshAccessToken();
+        config.headers.Authorization = `Bearer ${newAccessToken}`;
+        return api(config);
+      } catch {
+        clearTokens();
+      }
+    }
+
     return Promise.reject(error);
   }
 );
 
-
-// --- API 함수들 (수정 없음) ---
+// --- API 함수들 ---
 export const fetchUserBuildings = () => {
   return api.get('/chatbot/buildings/');
 };
@@ -34,13 +66,11 @@ export const getAIRecommendation = (buildingData) => {
   return api.post('/chatbot/analyze/', { buildings: buildingData });
 };
 
-
-
 // 보고서 다운로드 (DOCX)
 export const downloadReport = (year) => {
   return api.get('/reports/download', {
     params: { year },
-    responseType: 'blob', 
+    responseType: 'blob',
   });
 };
 
@@ -50,6 +80,3 @@ export const fetchReportContext = (year) => {
     params: { year },
   });
 };
-
-
-
