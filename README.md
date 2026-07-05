@@ -1,15 +1,41 @@
-# ZEBRA — 공공건축물 온실가스 배출량 산정 및 보고 서비스
+<div align="center">
 
-공공건축물의 에너지 사용 데이터를 기반으로 **Scope 1(직접배출)·Scope 2(간접배출)** 온실가스 배출량을
-국가 산정지침(K-GHG)과 국제 표준(IPCC 2006, ISO 14064-1)에 따라 자동으로 산정하고, 대시보드 시각화와
-보고서(docx) 자동 생성을 지원하는 웹 서비스입니다.
+# 🦓 ZEBRA — 공공건축물 온실가스 배출량 산정 및 보고 서비스
 
-## 배경
+**공공건축물의 에너지 사용 데이터를 K-GHG·IPCC 기준에 따라 자동으로 Scope 1·2 배출량으로 환산하고,
+대시보드와 보고서로 보여주는 서비스입니다.**
 
-공공건축물(관공서, 학교, 도서관, 체육센터 등)의 전기·도시가스·경유·LPG 등 에너지 사용량은
-정량적으로 통합 관리되지 않고 있으며, 국내 지침(K-GHG, 탄소중립기본법)의 세부 요건까지
-충족하는 시스템이 부재했습니다. 이 프로젝트는 공공기관이 자체적으로 Scope 1·2 배출량을
-산정·관리·보고할 수 있는 플랫폼을 목표로 시작되었습니다.
+![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/Django-5.2-092E20?logo=django&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![DRF](https://img.shields.io/badge/DRF-3.16-A30000?logo=django&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/DB-SQLite%20%2F%20PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+![HuggingFace](https://img.shields.io/badge/HuggingFace-Inference%20API-FFD21E?logo=huggingface&logoColor=black)
+
+[한 줄 요약](#-한-줄-요약) · [왜 만들었나](#-왜-만들었나) · [주요 기능](#주요-기능) ·
+[아키텍처](#아키텍처) · [기술 스택](#기술-스택) · [로컬 실행](#로컬-실행)
+
+</div>
+
+---
+
+## 💡 한 줄 요약
+
+> 공공건축물의 전기·가스·유류 사용량만 입력하면, K-GHG·IPCC 기준에 맞는 Scope 1·2 배출량이
+> 자동으로 계산되고 대시보드 시각화와 docx 보고서까지 원클릭으로 나옵니다.
+
+## 🎯 왜 만들었나
+
+| 기존 현실 | ZEBRA의 해결 |
+|---|---|
+| 전기·가스·유류 등 에너지 사용량이 흩어져 있어 통합 관리가 안 됨 | 건물 단위로 활동자료를 한 곳에 모아 표준화 관리 |
+| Scope 1·2 배출량을 수기로 계산 → 시간 소모, 실수 가능성 | 배출계수 자동 매핑으로 **즉시 자동 계산** |
+| 국내 K-GHG 지침에 맞는 보고서 양식이 따로 없음 | 클릭 한 번으로 **K-GHG 기준 docx 보고서** 자동 생성 |
+| 건물별·연도별 배출 현황을 한눈에 비교하기 어려움 | 대시보드에서 추세·Scope 비율·면적당 강도지표 시각화 |
+
+대한민국은 「탄소중립기본법」과 NDC 목표에 따라 공공부문 온실가스 감축 의무를 확대하고 있지만,
+공공건축물의 에너지 사용량은 다원적이고 정량적 산정·보고 체계가 없었습니다. ZEBRA는 이 공백을
+메우기 위한 산정·시각화·보고 통합 플랫폼입니다.
 
 ## 주요 기능
 
@@ -20,7 +46,10 @@
 - **보고서 자동 생성**: 기관·연도별 온실가스 배출량 보고서를 docx 파일로 원클릭 다운로드 (아래 상세 참고)
 - **감축 대안 추천 챗봇**: 사용자 질의에 따라 탄소 감축 방안을 제안 (Hugging Face 기반)
 
-### 보고서 자동 생성 상세
+<details>
+<summary><b>📄 보고서 자동 생성 상세 보기</b></summary>
+
+<br>
 
 `GET /api/reports/download?year=2024` 호출 한 번으로 아래 내용을 담은 `.docx` 파일이 생성됩니다
 (`docxtpl` + Jinja2로 `report_template.docx` 서식에 데이터를 채워 넣는 방식).
@@ -38,16 +67,7 @@
 건물 데이터가 하나도 없는 연도는 204(No Content)로 응답하며, 남용 방지를 위해 사용자당 시간당 20회로
 요청을 제한합니다(`ReportThrottle`).
 
-## 기술 스택
-
-| 구분 | 기술 |
-|---|---|
-| Frontend | React 19, React Router 7, Recharts, Axios |
-| Backend | Django 5.2, Django REST Framework, drf-yasg(Swagger), SimpleJWT |
-| DB (개발) | SQLite |
-| DB (운영 권장) | PostgreSQL 14+ (Building 모델의 조건부 UniqueConstraint를 네이티브 지원) |
-| 챗봇 | Hugging Face Inference API (OpenAI 호환 라우터) |
-| 인증 | JWT (accounts 앱) |
+</details>
 
 ## 아키텍처
 
@@ -63,6 +83,17 @@ Frontend(React) ─ REST API ─ Backend(Django)
 
 산정 흐름: `Scope1FuelUsage / ElectricityUsage / AreaInfo` (활동자료) → 계산 서비스 →
 `EmissionAgg`(연도별 집계 캐시) → 대시보드/보고서에서 고속 조회
+
+## 기술 스택
+
+| 구분 | 기술 |
+|---|---|
+| Frontend | React 19, React Router 7, Recharts, Axios |
+| Backend | Django 5.2, Django REST Framework, drf-yasg(Swagger), SimpleJWT |
+| DB (개발) | SQLite |
+| DB (운영 권장) | PostgreSQL 14+ (Building 모델의 조건부 UniqueConstraint를 네이티브 지원) |
+| 챗봇 | Hugging Face Inference API (OpenAI 호환 라우터) |
+| 인증 | JWT (accounts 앱) |
 
 ## API 개요
 
